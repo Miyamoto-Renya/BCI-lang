@@ -1,0 +1,101 @@
+\section{학습, 평가와 모델 활성화}
+\label{sec:learning}
+\subsection{분할 단위와 데이터 역할}
+학습 프로그램은 데이터의 역할과 분할 단위를 선언한다. 역할 집합을
+$\{\mathsf{Fit},\mathsf{Tune},\mathsf{Eval},\mathsf{Adapt}\}$로 두고,
+각 레코드에 피험자, 세션, 시행, 원본 구간 식별자를 부여한다.
+분할 함수 $g$는 프로토콜에서 선택한 독립 단위를 반환한다.
+\begin{equation}
+ g:\mathrm{RecordID}\longrightarrow
+ \mathrm{SubjectKey}\ \mid\ \mathrm{SessionKey}\ \mid\ \mathrm{TrialKey}.
+\end{equation}
+동일 원본 구간에서 생성한 창들은 공통 원천 식별자를 계보에 보관한다.
+세션을 가로지르는 일반화 평가는 세션 key를,
+피험자를 가로지르는 평가는 피험자 key를 분할 단위로 사용한다.
+MOABB의 데이터셋ㆍ전처리ㆍ평가 구성을 이 데이터 역할의 연결 지점으로 사용한다\cite{moabb}.
+
+\subsection{모델 객체와 fit 효과}
+모델 버전 $v$를 다음 객체로 정의한다.
+\begin{equation}
+ M_v=(\vartheta_v,\mathcal C_{\mathrm{in}},\mathcal C_{\mathrm{out}},
+      \rho_v^{\mathrm{fit}},a_v,\mathrm{digest}_v).
+ \label{eq:model}
+\end{equation}
+$\vartheta_v$는 수치 매개변수, $\rho_v^{\mathrm{fit}}$는 매개변수와 선택 절차에
+영향을 준 자료의 조상 집합, $a_v$는 해당 모델을 사용할 수 있게 된 시각이다.
+공분산 기준, 정규화 통계, 특징 선택, 하이퍼파라미터 선택도 이 조상 집합에 포함한다.
+
+학습 효과는 입력 자료의 역할을 소비하고 모델의 학습 계보를 생성한다.
+고정 모델 평가의 적합 조건은 다음과 같다.
+\begin{equation}
+ \begin{aligned}
+ \rho_v^{\mathrm{fit}}&\subseteq
+ \Anc(D_{\mathrm{fit}}\cup D_{\mathrm{tune}}),\\
+ g(\rho_v^{\mathrm{fit}})\cap g(D_{\mathrm{eval}})&=\varnothing.
+ \end{aligned}
+ \label{eq:split}
+\end{equation}
+컴파일러는 fit 효과가 생성한 모델 식별자를 추적하고, 평가 연산자는
+식~\eqref{eq:split}과 입력 스키마를 검사한다.
+이 조건은 필터ㆍ특징ㆍ추정기의 선택을 포함한 전체 학습 그래프에 적용한다.
+
+중첩 평가에서는 외부 fold $j$마다 모델 $M^{(j)}$를 생성한다.
+내부 fitㆍtune 자료는 외부 학습 집합의 부분집합으로 구성하고,
+외부 평가 집합은 해당 fold의 결과 계산에 사용한다.
+\begin{equation}
+ \begin{aligned}
+ D_{\mathrm{fit}}^{(j,k)}\cup D_{\mathrm{tune}}^{(j,k)}
+ &\subseteq D_{\mathrm{train}}^{(j)},\\
+ g(D_{\mathrm{train}}^{(j)})\cap g(D_{\mathrm{eval}}^{(j)})
+ &=\varnothing.
+ \end{aligned}
+\end{equation}
+분할 manifest는 원천 식별자, 그룹 함수, seed, 선택한 구간과 생성 절차의 버전을 보관한다.
+
+\subsection{온라인 적응의 시간 의미}
+적응 모델은 갱신 사건과 활성화 사건을 가진다. 버전 $v$의 활성화 시각을 $b_v$로 두면
+\begin{equation}
+ \max_{r\in\rho_v^{\mathrm{fit}}}a_r\le a_v\le b_v.
+ \label{eq:modeltime}
+\end{equation}
+예측 작업은 시작 시점에 활성 모델 $M_{v(n)}$를 선택하고,
+그 버전의 매개변수를 작업 완료까지 읽기 전용으로 보유한다.
+\begin{equation}
+ \widehat y_n=f_{\vartheta_{v(n)}}(x_n),\qquad
+ b_{v(n)}\le a_n^{\mathrm{start}},\qquad
+ \rho(\widehat y_n)=\rho(x_n)\cup\rho_{v(n)}^{\mathrm{fit}}.
+\end{equation}
+레이블을 사용하는 갱신은 레이블의 가용 시각을 추가 의존성으로 포함한다.
+prequential 프로토콜은 예측, 결과 평가, 레이블 기반 갱신의 사건 순서를 기록한다.
+비지도 적응은 입력 특징과 갱신 정책을 자신의 fit 계보에 기록한다.
+정규화, 시계 보정과 calibration도 버전과 활성화 시각을 가지므로 같은 실행 규칙을 사용한다.
+
+\subsection{추정값과 제어 사건}
+추정기 출력은 class score, 확률 벡터, 연속 상태 추정량 등의 명목 형식을 갖는다.
+확률 벡터는 $p_k\ge0$, $\sum_kp_k=1$을 만족하며,
+확률 보정 연산은 방법ㆍ자료ㆍ버전을 추가한다.
+의사결정 연산은 입력 형식과 임계값 정책을 사용하여 사건을 생성한다.
+예를 들어
+\begin{equation}
+ d(p)=
+ \begin{cases}
+ \operatorname{Select}(\arg\max_kp_k),&\max_kp_k\ge\eta,\\
+ \operatorname{Hold},&\max_kp_k<\eta
+ \end{cases}
+\end{equation}
+로 정의한다. 최댓값의 동점은 선언한 클래스 순서의 첫 항목으로 결정한다.
+임계값 $\eta$의 선택 자료는 해당 정책의 학습 계보에 포함한다.
+명령 출력은 사건의 단위ㆍ범위ㆍ목표 시각과 장치 기능 요구를 입력받는다.
+실행기는 출력한 명령과 장치 응답을 동일한 사건 식별자로 연결한다.
+
+\subsection{평가 결과의 구조}
+평가 연산자는 분할 manifest, 모델 버전, 예측ㆍ레이블 쌍, 품질 선택 정책과 지표 정의를 반환한다.
+클래스별 recall을 평균하는 balanced accuracy는
+\begin{equation}
+ \mathrm{BA}=\frac1K\sum_{k=1}^{K}
+ \frac{\mathrm{TP}_k}{\mathrm{TP}_k+\mathrm{FN}_k}
+\end{equation}
+로 계산하며, 각 분모가 양수인 평가 구성을 사용한다.
+집계는 시행, 세션, 피험자 중 지정한 단위를 따라 수행한다.
+구간 추정은 재표집 단위, 표본 수, 신뢰수준과 난수 seed를 결과 메타데이터로 포함한다.
+지연 결과는 입력 준비, 출력 완료와 사건 응답의 관측 경계를 구분하여 기록한다.

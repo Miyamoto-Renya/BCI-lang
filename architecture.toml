@@ -1,0 +1,58 @@
+version = 1
+package_root = "crates"
+max_rust_path_parts = 1
+
+[packages.bci-schema]
+path = "crates/schema"
+allows = []
+responsibility = "측정 스키마, 시간·품질·연산자 계약의 공통 값 타입"
+
+[packages.bci-ir]
+path = "crates/ir"
+allows = ["bci-schema"]
+responsibility = "형식화 그래프, 실행 계획과 증명서의 데이터 구조"
+
+[packages.bci-artifact]
+path = "crates/artifact"
+allows = ["bci-schema", "bci-ir"]
+responsibility = "artifact codec, manifest, 기록 저장과 복원"
+
+[packages.bci-devices]
+path = "crates/devices"
+allows = ["bci-schema"]
+responsibility = "장치 프로필, 바인딩 계약과 adapter 인터페이스"
+
+[packages.bci-compiler]
+path = "crates/compiler"
+allows = ["bci-schema", "bci-ir", "bci-artifact", "bci-devices"]
+responsibility = "소스 해석, 타입·효과 검사, 바인딩과 계획 생성"
+
+[packages.bci-verify]
+path = "crates/verify"
+allows = ["bci-schema", "bci-ir"]
+responsibility = "계획 증명서의 독립 검증"
+
+[packages.bci-extension-macros]
+path = "crates/extension-macros"
+allows = []
+responsibility = "Rust 등록 속성과 wrapper 코드 생성"
+
+[packages.bci-extension]
+path = "crates/extension"
+allows = ["bci-schema", "bci-extension-macros"]
+responsibility = "사용자 연산자 SDK, 실행 context와 codec 인터페이스"
+
+[packages.bci-operators]
+path = "crates/operators"
+allows = ["bci-schema", "bci-extension"]
+responsibility = "표준 수치 커널, 참조 구현과 등록 목록"
+
+[packages.bci-runtime]
+path = "crates/runtime"
+allows = ["bci-schema", "bci-ir", "bci-verify", "bci-extension", "bci-devices"]
+responsibility = "actor, 일정, 버퍼, 상태 전이와 실행 제어"
+
+[packages.bci-cli]
+path = "crates/cli"
+allows = ["bci-schema", "bci-compiler", "bci-runtime", "bci-artifact", "bci-devices", "bci-operators", "bci-extension"]
+responsibility = "명령 해석과 compiler·runtime·구현체 조립"

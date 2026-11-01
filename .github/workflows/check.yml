@@ -1,0 +1,24 @@
+name: Workspace checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CARGO_TERM_COLOR: always
+      RUSTUP_TOOLCHAIN: 1.97.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Rust
+        run: rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+      - name: Prepare locked dependencies
+        run: cargo fetch --locked
+      - name: Check workspace
+        run: python3 tools/check.py

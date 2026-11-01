@@ -1,0 +1,19 @@
+[package]
+name = "bci-verify"
+description = "BCi 실행 계획 증명서의 독립 검증 경계"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+bci-schema.workspace = true
+bci-ir.workspace = true
+
+[lints]
+workspace = true

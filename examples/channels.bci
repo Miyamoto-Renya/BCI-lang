@@ -1,0 +1,36 @@
+language "bci/0.1";
+module demo.channels;
+
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.signal as signal;
+use std.runtime as runtime;
+use std.recording as recording;
+
+schema EEG = schema.load("eeg.schema.json");
+clock Session = time.session_clock(name: "measurement.session");
+const Filter = signal.coefficients("smooth.coefficients.json");
+resource Budget = runtime.budget(memory: 16[MiB], queue_policy: Queue.Fault);
+
+run Main {
+    runtime.configure(mode: Mode.Live, resources: Budget);
+    let raw = source.csv(
+        path: "samples.csv", schema: EEG, clock: Session, rate: 250[Hz],
+        gap: Gap.Reset, invalid: Invalid.Mark
+    );
+    let ordered = raw |> signal.reorder(channels: ["C4", "C3"]);
+    let referenced = ordered |> signal.rereference(weights: [0.5, 0.5]);
+    let selected = referenced |> signal.select(channels: ["C3"]);
+    let smooth = selected
+        |> signal.convert_unit(to: "V")
+        |> signal.fir(coeffs: Filter, warmup: Warmup.Full);
+    let epochs = smooth |> signal.window(
+        size: 4, hop: 2, start: WindowStart.FirstValid,
+        anchor: Anchor.End, quality: Quality.RequireAll
+    );
+    let covariance = epochs
+        |> signal.covariance()
+        |> signal.regularize(shrinkage: 0.1, floor: 1e-12[V^2]);
+    recording.write((raw, ordered, referenced, selected, covariance), to: "recordings/channels");
+}

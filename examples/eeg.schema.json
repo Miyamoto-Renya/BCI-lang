@@ -1,0 +1,8 @@
+{
+  "format": "bci-schema/0.1",
+  "name": "EEG",
+  "channels": [
+    { "id": "C3", "quantity": "electrical.voltage", "unit": "uV", "reference": "CPz" },
+    { "id": "C4", "quantity": "electrical.voltage", "unit": "uV", "reference": "CPz" }
+  ]
+}

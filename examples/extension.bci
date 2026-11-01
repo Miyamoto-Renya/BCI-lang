@@ -1,0 +1,19 @@
+language "bci/0.1";
+module demo.extension;
+
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.signal as signal;
+use std.recording as recording;
+use lab.signal as lab_signal;
+
+schema EEG = schema.load("eeg.schema.json");
+clock Session = time.session_clock(name: "extension.session");
+
+run Main {
+    let raw = source.synthetic(schema: EEG, clock: Session, rate: 250[Hz]);
+    let volts = raw |> signal.convert_unit(to: "V");
+    let rectified = volts |> lab_signal.rectify();
+    recording.write((raw, rectified), to: "recordings/extension");
+}

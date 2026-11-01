@@ -1,0 +1,92 @@
+\section{컴파일 산출물과 적합성 조건}
+\label{sec:conformance}
+\subsection{실행 manifest}
+컴파일러는 프로그램의 정규화된 구문, 형식화 그래프, 하드웨어 바인딩과 실행 계획을
+하나의 manifest로 생성한다. manifest는 값의 표현과 의미를 함께 추적하는 기준 문서이다.
+표~\ref{tab:manifest}는 그 필드 집합을 정의한다.
+
+\begin{table}[tb]
+\centering\small
+\caption{실행 manifest의 필수 구성}
+\begin{tabularx}{\linewidth}{@{}P{.23\linewidth}Y@{}}
+\toprule 구성 & 저장 내용 \\\midrule
+언어와 그래프 & 언어 버전, 정규화 AST, 그래프 식별자, 원시 연산자 버전 \\
+하드웨어 & 프로필 $H$, 설정 $\theta$, 기능 요구, 접근 조건, 원문 식별자 \\
+형식 & 채널 순서, 측정량, 단위, reference, 좌표계, 자료형, stride \\
+시간 & 원래 시계, clock epoch, 변환 버전, 유효 구간, 오차 계약 \\
+수치 & 계수, 표현 정밀도, 반올림ㆍ포화 정책, 참조 오차 기준 \\
+학습 & 분할 manifest, fit 계보, 모델 digest, 모델 활성화 사건 \\
+실행 & actor 소유권, 일정, 버퍼 용량, 큐 정책, 서비스ㆍ응답시간 계약 \\
+기록 & 원본 범위, 품질 사건, 스키마 변경, 실행 환경과 결과 식별자 \\
+\bottomrule
+\end{tabularx}
+\label{tab:manifest}
+\end{table}
+
+형식화 구체화는 단위ㆍ채널ㆍ시계 제약을 풀고 각 연결선의 타입을 결정한다.
+정적 인덱스 제약은 정수 선형 산술, 유리수 비교와 유한 집합 관계로 구성한다.
+행렬의 수치 조건과 장치 조회값은 해당 원시 연산자ㆍ프로필의 계약 식별자에 연결한다.
+원시 연산자 선택은 수치 커널과 상태 표현을 결정한다. 실행 계획 생성은
+고정률 부분그래프의 firing 순서, 사건 경계, 메모리 소유권과 버퍼 위치를 결정한다.
+각 변환은 입력ㆍ출력 그래프의 대응표와 계약 증거를 manifest에 추가한다.
+
+\subsection{관측 의미의 대응}
+프로그램 $P$, 입력 trace $I$, 환경 $A$에서 코어 의미가 허용하는 실행 집합을
+$\mathcal T(P,I,A)$로 둔다. 정수 디코딩, 사건 순서와 모델 버전은 정확한 관측 관계를
+사용하고, 실수 결과는 식~\eqref{eq:numeric}의 수치 관계를 사용한다.
+컴파일 결과 $C(P)$의 실행 trace $T$에 대해 적합성 관계를
+\begin{equation}
+ \operatorname{Obs}(T)
+ \in\mathcal T_{\epsilon}(P,I,A)
+ \label{eq:refinement}
+\end{equation}
+로 정의한다. $\mathcal T_\epsilon$은 명시한 수치 허용오차와 시간 구간을 적용한 관측 집합이다.
+관측에는 값, 가용 시각, 품질, 모델 버전, schemaㆍclock epoch와 외부 사건을 포함한다.
+버퍼 정책이 생성하는 gap과 상태 전이도 같은 trace의 원소로 기록한다.
+
+검사기는 각 원시 연산자의 전이 불변식을 확인하고, 합성 규칙에 따라 출력 계약을 계산한다.
+하드웨어 바인딩은 식~\eqref{eq:bind}를 평가한다. 일정 검사는 반복 벡터와 실행 접두의
+토큰 수를 검사하고, 시간 검사는 선택한 arrivalㆍservice curve 또는 응답시간 계약을 계산한다.
+각 결과는 적용한 입력 영역, 구성, 도구ㆍ계약 버전과 함께 저장한다.
+
+\subsection{규격 적합성의 판정 대상}
+\begin{longtable}{@{}P{.19\linewidth}P{.36\linewidth}P{.39\linewidth}@{}}
+\caption{적합성 검사 대상과 판정 관계}\label{tab:conformance}\\
+\toprule 대상 & 입력과 근거 & 판정 관계 \\\midrule
+\endfirsthead
+\multicolumn{3}{l}{\small 표 \thetable. 적합성 검사 대상과 판정 관계 (계속)}\\
+\toprule 대상 & 입력과 근거 & 판정 관계 \\\midrule
+\endhead
+\bottomrule\endfoot
+패킷 디코딩 & 프로토콜 판본, 패킷ㆍ기준값 쌍, 경계 길이 & 부호ㆍbyte orderㆍ채널ㆍ상태값의 정확한 대응 \\
+물리량 변환 & 정수 범위, gain, offset, 기준 단위 & 기준값과 식으로 정의한 수치 관계 \\
+시계 변환 & 동기 사건 쌍, 관측 경계, 유효 구간 & 시간 구간 포함과 오차 증거 종류 \\
+스키마 전이 & 설정 전후 descriptor와 경계 사건 & 구간별 형식, 상태 변환, epoch 순서 \\
+품질 전파 & gapㆍ보간ㆍ복구ㆍ포화 사건 trace & 연산자 정책에 따른 출력 마스크와 계보 \\
+학습 계보 & 원천 ID, 그룹 함수, fitㆍtuneㆍeval 집합 & 식~\eqref{eq:split} 및 모델 가용 조건 \\
+실행 일정 & 생산ㆍ소비율, 반복 벡터, 초기 토큰 & firing 가능성, 주기 평형, 최대 점유량 \\
+시간ㆍ메모리 & 유입 상한, 서비스 곡선, 환경 조건 & backlogㆍ반응시간ㆍ메모리 예산 \\
+기록ㆍ재생 & manifest, 원본ㆍ사건 순서, 활성 버전 & 식~\eqref{eq:refinement}의 관측 대응 \\
+\end{longtable}
+
+\subsection{설정 변경과 재연결의 전이}
+설정 변경 사건은 새 구성 $\theta'$와 새 스키마 기술자를 생성한다.
+실행기는 현재 epoch의 진행 경계를 닫고, 남은 처리 의존성을 해당 epoch에 귀속시킨다.
+다음 epoch에는 새로운 형식과 호환하는 상태 변환 $R_Z$를 적용한다.
+\begin{equation}
+ R_Z:Z_{\theta}\longrightarrow Z_{\theta'},\qquad
+ R_Z(\mathcal J_{\theta})\subseteq\mathcal J_{\theta'}.
+\end{equation}
+초기화 정책은 $R_Z(z)=z^0_{\theta'}$로 표현한다.
+장치 재연결은 acquisition epoch를 갱신하고, 시계 재설정은 clock epoch와
+새 시간 변환 레코드를 생성한다. 이 사건들이 배열 해석과 시간 연속성의 경계를 결정한다.
+
+\subsection{기록과 재생의 관측 경계}
+기록 어댑터는 원래 측정 시각, 원래 가용 시각과 재생 시각을 각각 저장한다.
+실시간 실행 재생은 원래 가용 순서를 사용하여 $\cut_u$를 구성한다.
+회고 분석은 새 시간 뷰와 변환 계보를 생성하여 기록 구간을 입력으로 사용한다.
+XDF는 스트림 timestamp와 clock offset 정보를 기록하고\cite{xdf,lsl_time},
+SNIRF는 광학 측정열ㆍ시간 배열과 chunked 기록을 표현한다\cite{snirf}.
+Open Ephys와 SpikeGLX의 기록 어댑터는 해당 버전의 표본 번호ㆍ시각ㆍ스케일 필드를
+복원한다\cite{open_ephys_binary,spikeglx_metadata}.
+재생기는 이 기록 형식들을 공통 시간 레코드와 계보 그래프에 대응시킨다.

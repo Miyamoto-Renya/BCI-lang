@@ -1,0 +1,172 @@
+\section{시계 변환과 시간 완결 계약}
+\label{sec:time}
+
+시간 계층은 각 원천의 대표 측정시각을 기준 시계로 옮기고, 가용 시각에 따라
+창의 완결을 판정한다. LSL은 송신 호스트 시계와 호스트 사이의 offset 관측을 제공하며,
+BrainFlow는 장치별 timestamp 의미와 preset별 표본률을 제공한다
+\citep{lsl_time,brainflow_data}. 어댑터는 이 관측의 anchor, 시계 영역과 변환 버전을
+시간 레코드에 연결한다.
+
+\subsection{유효 구간을 가진 시계 사상}
+
+원천 시계 $\kappa$의 읽기값을 $u$, 기준 시계를 $\kappa_0$로 둔다.
+시계 세대 안의 변환 버전 $v$는 유효 구간 $J_v$와 중심 $u_0$를 가진다.
+그 구간에서 실제 사상과 추정 사상을 다음과 같이 표현한다.
+\begin{equation}
+ \begin{aligned}
+ \phi_v(u)&=b_v+a_v(u-u_0)+r_v(u),\\
+ \widehat\phi_v(u)&=\widehat b_v+\widehat a_v(u-u_0),\qquad u\in J_v.
+ \end{aligned}
+ \label{eq:clock-affine}
+\end{equation}
+계약은 실제 사상의 증가성, $\widehat a_v>\delta_a\ge0$과 계수ㆍ잔차의 상한
+$|b_v-\widehat b_v|\le\delta_b$,
+$|a_v-\widehat a_v|\le\delta_a$,
+$|r_v(u)|\le\delta_r$를 포함한다. 따라서 시간 구간은
+\begin{equation}
+ \begin{aligned}
+ \epsilon_v(u)&=\delta_b+|u-u_0|\delta_a+\delta_r,\\
+ \Phi_v(u)&=[\widehat\phi_v(u)-\epsilon_v(u),
+                  \widehat\phi_v(u)+\epsilon_v(u)]
+ \end{aligned}
+ \label{eq:clock-interval}
+\end{equation}
+로 계산한다. 원천 timestamp의 양자화와 jitter를 구간 $U$로 표현하면,
+다음 구간 확장을 사용한다.
+\begin{equation}
+ \Phi_v(U)=\operatorname{hull}\!\bigcup_{u\in U}\Phi_v(u).
+ \label{eq:clock-interval-extension}
+\end{equation}
+변환 레코드는 계수, $J_v$, 가용 시각, clock epoch와 근거를 함께 저장한다.
+근거 형식 $\mathsf{Bound}(A,J_v,\epsilon_v)$는 가정 $A$ 아래의 포함 관계를,
+$\mathsf{Estimate}(\mathcal D,p,\widehat q_p,n)$는 자료 $\mathcal D$에서 얻은
+$p$-분위수 추정과 표본 수를 기술한다.
+
+동일한 affine 구간의 두 읽기값 $u_1,u_2$는 공통 offset을 공유하므로,
+상대 시간의 오차는 다음 상한을 갖는다.
+\begin{equation}
+ \left|
+ \phi_v(u_2)-\phi_v(u_1)-\widehat a_v(u_2-u_1)
+ \right|
+ \le\delta_a|u_2-u_1|+2\delta_r.
+ \label{eq:clock-relative}
+\end{equation}
+두 사상 $\Phi_{12},\Phi_{23}$을 합성할 때 $I_{12}(u)=\Phi_{12}(u)
+\subseteq J_{23}$를 요구한다. 중간 구간 전체에 걸친 오차 전파는
+\begin{equation}
+ \epsilon_{13}(u)\le
+ |\widehat a_{23}|\,\epsilon_{12}(u)
+ +\sup_{z\in I_{12}(u)}\epsilon_{23}(z)
+ \label{eq:clock-compose}
+\end{equation}
+로 계산한다. 이 규칙은 장치, SDK 호스트와 실행기 시계 사이의 변환 사슬에 적용한다.
+Rust의 \code{Instant}는 호스트에서 두 관측 사이의 경과시간을 표현한다.
+실행기는 origin과 clock-domain 식별자를 부여하고 외부 시계와의 대응을
+식~\eqref{eq:clock-affine}의 레코드로 관리한다\citep{rust_instant}.
+
+\subsection{표본 격자, 패킷과 시간 anchor}
+
+균일 발생 규칙은 원천 시계의 격자
+$u_n=u_0+(n-n_0)\Delta$를 사용한다.
+affine 구간의 명목 기준 표본률은
+$\widehat f_{\mathrm{ref}}=(\widehat a_v\Delta)^{-1}$이다.
+스트림 기술자는 채널별 ADC 획득률 $f_{\mathrm{ADC}}$,
+장치 방출률 $f_{\mathrm{emit}}$, 어댑터 출력률 $f_{\mathrm{out}}$을 각각 기록한다.
+패킷당 채널별 표본 수 $M$이 일정한 경로는
+\begin{equation}
+ f_{\mathrm{packet}}=\frac{f_{\mathrm{emit}}}{M}
+ \label{eq:packet-rate}
+\end{equation}
+을 만족한다. 패킷 sequence와 식~\eqref{eq:record}의 표본 인덱스 $K_i$는
+각자의 출처를 유지한다. 디지털 필터와 재표본화는 출력 격자,
+대표시각 anchor와 의존 시간 지지를 함께 갱신한다.
+
+장치의 ADC 관측, SDK 수신, 소프트웨어 명령과 물리 edge는 각각 이름을 가진 anchor이다.
+예를 들어 PC 수신 시각을 제공하는 BrainFlow 경로는 해당 수신 경계를
+timestamp anchor로 기록한다\citep{brainflow_data}.
+동일 pulse의 관측 edge를 대응시키는 경로는 edge 쌍으로 clock mapping을 구성한다.
+SpikeGLX의 동기화 경로는 stream별 clock calibration과 공통 sync pulse의
+edge 대응을 사용한다\citep{spikeglx_manual}.
+
+\subsection{관측 오차와 대기 자료를 포함한 watermark}
+
+입력 $c$의 원시 레코드에 대해
+$I_i^{\mathrm{meas}}=[\ell_i,h_i]
+=[\widehat t_i-\epsilon_i,\widehat t_i+\epsilon_i]$로 둔다.
+ingress 시각의 관측 구간을
+$[\widehat a_i-\eta_i,\widehat a_i+\eta_i]$로 둔다.
+한 clock epoch와 시간 뷰에서 지연 계약을 다음과 같이 정의한다.
+\begin{equation}
+ (\widehat a_i+\eta_i)-(\widehat t_i-\epsilon_i)\le L_c.
+ \label{eq:interval-lateness}
+\end{equation}
+관측 중심시각의 차이가 $\widehat a_i-\widehat t_i\le L_c^0$이고
+$\eta_i\le\overline\eta_c$, $\epsilon_i\le\overline\epsilon_c$이면,
+$L_c=L_c^0+\overline\eta_c+\overline\epsilon_c$를 사용한다.
+따라서 $L_c$는 두 관측의 시계 오차를 함께 포함한다.
+
+현재 기준 시각의 관측 구간을 $s=[s^-,s^+]$로 둔다.
+ingress 이후 join 상태에 반영되는 과정에 있는 레코드 집합을
+$\operatorname{Pending}_c(s)$라 두고 다음 진행 경계를 계산한다.
+\begin{equation}
+ \begin{aligned}
+ w_c^{\mathrm{in}}(s)&=s^--L_c,\\
+ p_c(s)&=\inf\{\ell_i:i\in\operatorname{Pending}_c(s)\},
+                  \qquad\inf\varnothing=+\infty,\\
+ w_{\Join}(s)&=\min_c\min\{w_c^{\mathrm{in}}(s),p_c(s)\}.
+ \end{aligned}
+ \label{eq:pending-watermark}
+\end{equation}
+현재 시각 이후 도착하는 자료는 식~\eqref{eq:interval-lateness}에 따라
+$\ell_i>s^--L_c$를 만족한다. 이미 도착한 자료는 $p_c(s)$가 포괄한다.
+그러므로 $w_{\Join}$는 join에 앞으로 반영될 자료의 대표시각 하한이다.
+구현은 자료, gap, watermark와 epoch 종료 사건의 전달 순서에 이 관계를 유지한다.
+
+창 $W_k=[u_k,v_k)$는 다음 조건에서 완결된다.
+\begin{equation}
+ \begin{aligned}
+ \operatorname{Complete}(W_k,s)&\iff w_{\Join}(s)\ge v_k,\\
+ \operatorname{Definite}(i,W_k)&\iff I_i^{\mathrm{meas}}\subseteq W_k,\\
+ \operatorname{Possible}(i,W_k)&\iff
+                         I_i^{\mathrm{meas}}\cap W_k\ne\varnothing.
+ \end{aligned}
+ \label{eq:window-complete}
+\end{equation}
+연산자는 확정ㆍ가능 소속 중 선택한 정책과 경계 모호성 상태를 보관한다.
+원시 레코드의 창 할당은 대표 측정 구간을 사용하고,
+출력의 전체 시간 지지는 식~\eqref{eq:support}의 조상 합집합을 사용한다.
+시간구간 창 출력은 오른쪽 경계 $v_k$를 대표시각 anchor로 선택한다.
+표본수 창은 식~\eqref{eq:window}의 마지막 표본 시각을 anchor로 사용한다.
+중심 anchor를 사용하는 연산자는 전방 관측 길이 $h_o$를 효과에 기록한다.
+
+ingress 이후 join 반영까지의 상한이 $D_c$이고,
+진행 경계 갱신 간격의 상한이 $G$이면 창의 가용 시각은
+\begin{equation}
+ a_{\mathrm{close}}\le v_k+\max_c(L_c+D_c)+G
+ \label{eq:window-availability-bound}
+\end{equation}
+를 만족한다. 이 식은 기준 시각을 직접 읽는 진행 타이머를 가정한다.
+구간 타이머를 사용하는 실행기는 현재 시각의 하한과 실제 시각 사이의 상한을 $G$에 더한다.
+가용 시각 인과성은 창 완결 사건을 입력으로 포함하여
+식~\eqref{eq:availability-causality}와 연결한다.
+
+\subsection{Marker와 반응시간 계약}
+
+marker는 사건 코드, 발생 원천, 관측 anchor, edge 극성,
+측정 구간, 가용 시각과 clock epoch를 가진다.
+장치의 디지털 입력 경로는 전압 임계값, 최소 pulse 폭과 표본화 규칙을
+하드웨어 계약에 연결한다. 소프트웨어 명령 구간 $I^{\mathrm{cmd}}$와
+명령에서 물리 edge까지의 지연 구간 $\Delta_{\mathrm{path}}=[d^-,d^+]$가 주어지면,
+명령에 근거한 edge 예측 구간을
+\begin{equation}
+ I^{\mathrm{edge,pred}}=I^{\mathrm{cmd}}\oplus\Delta_{\mathrm{path}},
+ \qquad
+ [a,b]\oplus[c,d]=[a+c,b+d]
+ \label{eq:marker-delay}
+\end{equation}
+로 정의한다. edge를 획득한 표본은 그 표본 격자와 clock mapping으로
+자신의 $I^{\mathrm{meas}}$를 얻는다.
+기준 marker 구간 $[\ell_m,h_m]$, 출력 가용 시각 상한 $\overline a_y$,
+반응시간 요구 $D$에 대해
+$\overline a_y\le\ell_m+D$를 충분조건으로 사용한다.
+실행기는 적용한 지연 구간, 시계 변환과 창 소속 정책을 결과의 계보에 기록한다.

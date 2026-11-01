@@ -1,0 +1,19 @@
+[package]
+name = "bci-operators"
+description = "BCi 표준 연산자 구현과 참조 커널의 패키지 경계"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+bci-schema.workspace = true
+bci-extension.workspace = true
+
+[lints]
+workspace = true

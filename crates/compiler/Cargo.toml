@@ -1,0 +1,26 @@
+[package]
+name = "bci-compiler"
+description = "BCi 소스 분석과 실행 계획 생성"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+serde_json.workspace = true
+bci-schema.workspace = true
+bci-ir.workspace = true
+bci-artifact.workspace = true
+bci-devices.workspace = true
+
+[lints]
+workspace = true
+
+[[test]]
+name = "scenarios"
+path = "scenarios.rs"

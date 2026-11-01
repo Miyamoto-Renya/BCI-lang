@@ -1,0 +1,973 @@
+{
+  "bias_bits": [
+    "bfa2b7484df8f8c6",
+    "3fa2b7484df8f8b8"
+  ],
+  "classes": [
+    "left",
+    "right"
+  ],
+  "dataset_id": "motor-selection-v1",
+  "features": {
+    "channels": [
+      {
+        "id": "mu_difference",
+        "quantity": "feature.log_power",
+        "reference": "features.motor-v1",
+        "unit": "1",
+        "unit_dimension": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "unit_scale": "1"
+      },
+      {
+        "id": "beta_difference",
+        "quantity": "feature.log_power",
+        "reference": "features.motor-v1",
+        "unit": "1",
+        "unit_dimension": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "unit_scale": "1"
+      }
+    ],
+    "name": "MotorFeatures"
+  },
+  "fit_digest": "3b6f92d2fd6ac416d5633d15f50aaa6a8d6c09ce851b214309b1b32900b4af04",
+  "fit_rows": [
+    "row-00",
+    "row-01",
+    "row-02",
+    "row-03"
+  ],
+  "format": "bci-model/0.2",
+  "group_by": "subject",
+  "mean_bits": [
+    "0000000000000000",
+    "3ff0000000000000"
+  ],
+  "model_id": "78680a246a1631604ea84b4eac154f4f83bfb3174ad4cc036e7dee4c18ab95ea",
+  "numeric_contract": {
+    "calibration": "Uncalibrated",
+    "dtype": "f64",
+    "initial_weights": "Zero",
+    "normalization": "FitPopulationStdConstantOne",
+    "probability": "Softmax",
+    "quality": "RequireAll",
+    "rng": "None"
+  },
+  "profile": "bci-standardized-softmax/0.1",
+  "scale_bits": [
+    "3ff94c583ada5b53",
+    "3ff3988e1409212e"
+  ],
+  "selection": {
+    "aggregation": "Sample",
+    "balanced_accuracy": [
+      0.0,
+      1.0
+    ],
+    "candidates": [
+      {
+        "bias_bits": [
+          "0000000000000000",
+          "0000000000000000"
+        ],
+        "classes": [
+          "left",
+          "right"
+        ],
+        "dataset_id": "motor-selection-v1",
+        "features": {
+          "channels": [
+            {
+              "id": "mu_difference",
+              "quantity": "feature.log_power",
+              "reference": "features.motor-v1",
+              "unit": "1",
+              "unit_dimension": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "unit_scale": "1"
+            },
+            {
+              "id": "beta_difference",
+              "quantity": "feature.log_power",
+              "reference": "features.motor-v1",
+              "unit": "1",
+              "unit_dimension": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "unit_scale": "1"
+            }
+          ],
+          "name": "MotorFeatures"
+        },
+        "fit_digest": "3b6f92d2fd6ac416d5633d15f50aaa6a8d6c09ce851b214309b1b32900b4af04",
+        "fit_rows": [
+          "row-00",
+          "row-01",
+          "row-02",
+          "row-03"
+        ],
+        "format": "bci-model/0.2",
+        "group_by": "subject",
+        "mean_bits": [
+          "0000000000000000",
+          "3ff0000000000000"
+        ],
+        "model_id": "912f9b4d3eb97e4a9f651a3334341cd26e4b935f91767fcf4b821a9fa01dea04",
+        "numeric_contract": {
+          "calibration": "Uncalibrated",
+          "dtype": "f64",
+          "initial_weights": "Zero",
+          "normalization": "FitPopulationStdConstantOne",
+          "probability": "Softmax",
+          "quality": "RequireAll",
+          "rng": "None"
+        },
+        "profile": "bci-standardized-softmax/0.1",
+        "scale_bits": [
+          "3ff94c583ada5b53",
+          "3ff3988e1409212e"
+        ],
+        "selection": null,
+        "split": [
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 0,
+                "last": 31,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-00",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 32,
+                "last": 63,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-01",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 64,
+                "last": 95,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-02",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 96,
+                "last": 127,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-03",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 128,
+                "last": 159,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-04",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 160,
+                "last": 191,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-05",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 192,
+                "last": 223,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-06",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 224,
+                "last": 255,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-07",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 256,
+                "last": 287,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-08",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 288,
+                "last": 319,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-09",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 320,
+                "last": 351,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-10",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 352,
+                "last": 383,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-11",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 384,
+                "last": 415,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-12",
+            "role": "Eval"
+          }
+        ],
+        "training": {
+          "iterations": 1,
+          "l2_bits": "3f847ae147ae147b",
+          "learning_rate_bits": "3fb999999999999a"
+        },
+        "weight_bits": [
+          "bfa8494a75f057ac",
+          "3f94e6fdf33cf033",
+          "3fa8494a75f057ac",
+          "bf94e6fdf33cf033"
+        ]
+      },
+      {
+        "bias_bits": [
+          "bfa2b7484df8f8c6",
+          "3fa2b7484df8f8b8"
+        ],
+        "classes": [
+          "left",
+          "right"
+        ],
+        "dataset_id": "motor-selection-v1",
+        "features": {
+          "channels": [
+            {
+              "id": "mu_difference",
+              "quantity": "feature.log_power",
+              "reference": "features.motor-v1",
+              "unit": "1",
+              "unit_dimension": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "unit_scale": "1"
+            },
+            {
+              "id": "beta_difference",
+              "quantity": "feature.log_power",
+              "reference": "features.motor-v1",
+              "unit": "1",
+              "unit_dimension": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "unit_scale": "1"
+            }
+          ],
+          "name": "MotorFeatures"
+        },
+        "fit_digest": "3b6f92d2fd6ac416d5633d15f50aaa6a8d6c09ce851b214309b1b32900b4af04",
+        "fit_rows": [
+          "row-00",
+          "row-01",
+          "row-02",
+          "row-03"
+        ],
+        "format": "bci-model/0.2",
+        "group_by": "subject",
+        "mean_bits": [
+          "0000000000000000",
+          "3ff0000000000000"
+        ],
+        "model_id": "ed491420188b1c8db75822812c56ae0cfa166153ced155cbc096e051b71d35f0",
+        "numeric_contract": {
+          "calibration": "Uncalibrated",
+          "dtype": "f64",
+          "initial_weights": "Zero",
+          "normalization": "FitPopulationStdConstantOne",
+          "probability": "Softmax",
+          "quality": "RequireAll",
+          "rng": "None"
+        },
+        "profile": "bci-standardized-softmax/0.1",
+        "scale_bits": [
+          "3ff94c583ada5b53",
+          "3ff3988e1409212e"
+        ],
+        "selection": null,
+        "split": [
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 0,
+                "last": 31,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-00",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 32,
+                "last": 63,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-01",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 64,
+                "last": 95,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-02",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 96,
+                "last": 127,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-fit"
+            ],
+            "id": "row-03",
+            "role": "Fit"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 128,
+                "last": 159,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-04",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 160,
+                "last": 191,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-05",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 192,
+                "last": 223,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-06",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 224,
+                "last": 255,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-07",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 256,
+                "last": 287,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-tune"
+            ],
+            "id": "row-08",
+            "role": "Tune"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 288,
+                "last": 319,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-09",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 320,
+                "last": 351,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-10",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 352,
+                "last": 383,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-11",
+            "role": "Eval"
+          },
+          {
+            "ancestors": [
+              {
+                "epoch": 0,
+                "first": 384,
+                "last": 415,
+                "source_id": "motor-selection-fixture"
+              }
+            ],
+            "group": [
+              "subject-eval"
+            ],
+            "id": "row-12",
+            "role": "Eval"
+          }
+        ],
+        "training": {
+          "iterations": 400,
+          "l2_bits": "3f847ae147ae147b",
+          "learning_rate_bits": "3fb999999999999a"
+        },
+        "weight_bits": [
+          "bfffccd10e3c5da0",
+          "bfc80f5e2a474181",
+          "3fffccd10e3c5da0",
+          "3fc80f5e2a47417c"
+        ]
+      }
+    ],
+    "confusion_label_major": [
+      [
+        0,
+        2,
+        2,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        2
+      ]
+    ],
+    "dataset_id": "motor-selection-v1",
+    "format": "bci-selection/0.1",
+    "metric": "BalancedAccuracy",
+    "quality": "RequireAll",
+    "tie_break": "FirstCandidate",
+    "tune": [
+      {
+        "ancestors": [
+          {
+            "epoch": 0,
+            "first": 128,
+            "last": 159,
+            "source_id": "motor-selection-fixture"
+          }
+        ],
+        "group": [
+          "subject-tune"
+        ],
+        "id": "row-04",
+        "role": "Tune"
+      },
+      {
+        "ancestors": [
+          {
+            "epoch": 0,
+            "first": 160,
+            "last": 191,
+            "source_id": "motor-selection-fixture"
+          }
+        ],
+        "group": [
+          "subject-tune"
+        ],
+        "id": "row-05",
+        "role": "Tune"
+      },
+      {
+        "ancestors": [
+          {
+            "epoch": 0,
+            "first": 192,
+            "last": 223,
+            "source_id": "motor-selection-fixture"
+          }
+        ],
+        "group": [
+          "subject-tune"
+        ],
+        "id": "row-06",
+        "role": "Tune"
+      },
+      {
+        "ancestors": [
+          {
+            "epoch": 0,
+            "first": 224,
+            "last": 255,
+            "source_id": "motor-selection-fixture"
+          }
+        ],
+        "group": [
+          "subject-tune"
+        ],
+        "id": "row-07",
+        "role": "Tune"
+      },
+      {
+        "ancestors": [
+          {
+            "epoch": 0,
+            "first": 256,
+            "last": 287,
+            "source_id": "motor-selection-fixture"
+          }
+        ],
+        "group": [
+          "subject-tune"
+        ],
+        "id": "row-08",
+        "role": "Tune"
+      }
+    ],
+    "tune_digest": "4802416b09e16006cd074bddc357ab99f28ead1bba7fc79c7c6179e2b617a9b9",
+    "tune_rows": [
+      "row-04",
+      "row-05",
+      "row-06",
+      "row-07"
+    ],
+    "winner": 1
+  },
+  "split": [
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 0,
+          "last": 31,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-fit"
+      ],
+      "id": "row-00",
+      "role": "Fit"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 32,
+          "last": 63,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-fit"
+      ],
+      "id": "row-01",
+      "role": "Fit"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 64,
+          "last": 95,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-fit"
+      ],
+      "id": "row-02",
+      "role": "Fit"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 96,
+          "last": 127,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-fit"
+      ],
+      "id": "row-03",
+      "role": "Fit"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 128,
+          "last": 159,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-tune"
+      ],
+      "id": "row-04",
+      "role": "Tune"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 160,
+          "last": 191,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-tune"
+      ],
+      "id": "row-05",
+      "role": "Tune"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 192,
+          "last": 223,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-tune"
+      ],
+      "id": "row-06",
+      "role": "Tune"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 224,
+          "last": 255,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-tune"
+      ],
+      "id": "row-07",
+      "role": "Tune"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 256,
+          "last": 287,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-tune"
+      ],
+      "id": "row-08",
+      "role": "Tune"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 288,
+          "last": 319,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-eval"
+      ],
+      "id": "row-09",
+      "role": "Eval"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 320,
+          "last": 351,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-eval"
+      ],
+      "id": "row-10",
+      "role": "Eval"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 352,
+          "last": 383,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-eval"
+      ],
+      "id": "row-11",
+      "role": "Eval"
+    },
+    {
+      "ancestors": [
+        {
+          "epoch": 0,
+          "first": 384,
+          "last": 415,
+          "source_id": "motor-selection-fixture"
+        }
+      ],
+      "group": [
+        "subject-eval"
+      ],
+      "id": "row-12",
+      "role": "Eval"
+    }
+  ],
+  "training": {
+    "iterations": 400,
+    "l2_bits": "3f847ae147ae147b",
+    "learning_rate_bits": "3fb999999999999a"
+  },
+  "weight_bits": [
+    "bfffccd10e3c5da0",
+    "bfc80f5e2a474181",
+    "3fffccd10e3c5da0",
+    "3fc80f5e2a47417c"
+  ]
+}

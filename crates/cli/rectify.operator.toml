@@ -1,0 +1,16 @@
+contract_version = "bci-operator/0.1"
+extends = "std.contracts.pointwise_f64/0.1"
+
+[signature]
+quantity = "electrical.voltage"
+schema = "preserve"
+unit = "preserve"
+
+[numeric]
+input_domain = "finite_f64"
+reference = "rectify.reference.json"
+comparison = "exact_bits"
+
+[resources]
+state_bytes = 0
+scratch_bytes = 0

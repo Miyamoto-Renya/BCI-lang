@@ -1,0 +1,26 @@
+language "bci/0.1";
+module demo.resample;
+
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.signal as signal;
+use std.runtime as runtime;
+use std.recording as recording;
+
+schema EEG = schema.load("eeg.schema.json");
+clock Session = time.session_clock(name: "measurement.session");
+resource Budget = runtime.budget(memory: 16[MiB], queue_policy: Queue.Fault);
+
+run Main {
+    runtime.configure(mode: Mode.Live, resources: Budget);
+    let raw = source.synthetic(schema: EEG, clock: Session, rate: 250[Hz]);
+    let fast = raw |> signal.resample(
+        up: 3, down: 2, filter: [0.25, 0.5, 0.75, 0.75, 0.5, 0.25], phase: 0[s]
+    );
+    let restored_rate = fast |> signal.resample(
+        up: 2, down: 3, filter: [0.5, 0.5, 0.5, 0.5], phase: 0[s]
+    );
+    let combined = signal.mix((raw, restored_rate), weights: [0.5, 0.5]);
+    recording.write((raw, fast, restored_rate, combined), to: "recordings/resample");
+}

@@ -1,0 +1,25 @@
+language "bci/0.1";
+module demo.learning;
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.model as model;
+use std.decision as decision;
+use std.runtime as runtime;
+use std.recording as recording;
+
+schema Features = schema.load("learning.schema.json");
+clock Session = time.session_clock(name: "features.session");
+const Classifier = model.load("learning.model.json");
+resource Budget = runtime.budget(memory: 16[MiB], queue_policy: Queue.Fault);
+
+run Main {
+    runtime.configure(mode: Mode.Live, resources: Budget);
+    let features = source.csv(
+        path: "learning.csv", schema: Features, clock: Session, rate: 10[Hz],
+        gap: Gap.Reset, invalid: Invalid.Mark
+    );
+    let probabilities = features |> model.predict(using: Classifier);
+    let selected = probabilities |> decision.threshold(minimum: 0.8);
+    recording.write((features, probabilities, selected), to: "recordings/learning");
+}

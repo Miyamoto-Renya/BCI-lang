@@ -1,0 +1,24 @@
+language "bci/0.1";
+module demo.spectral;
+
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.signal as signal;
+use std.runtime as runtime;
+use std.recording as recording;
+
+schema EEG = schema.load("eeg.schema.json");
+clock Session = time.session_clock(name: "spectral.session");
+resource Budget = runtime.budget(memory: 16[MiB], queue_policy: Queue.Fault);
+
+run Main {
+    runtime.configure(mode: Mode.Live, resources: Budget);
+    let raw = source.synthetic(schema: EEG, clock: Session, rate: 250[Hz]);
+    let referenced = raw |> signal.rereference(weights: [0.5, 0.5]);
+    let epochs = referenced |> signal.window(size: 250, hop: 125, start: 0);
+    let spectrum = epochs |> signal.psd(taper: Taper.Hann, normalization: Psd.OneSidedDensity);
+    let alpha = spectrum |> signal.bandpower(band: #{low: 8[Hz], high: 13[Hz]});
+    let features = alpha |> signal.log_power(floor: 1e-12[uV^2], reference: 1[uV^2]);
+    recording.write((raw, spectrum, alpha, features), to: "recordings/spectral");
+}

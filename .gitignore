@@ -1,0 +1,12 @@
+/target/
+**/__pycache__/
+*.pyc
+/recordings/
+/examples/recordings/
+/results/
+/.agents/
+/.aws/
+/.codex/
+.env
+.env.*
+!.env.example

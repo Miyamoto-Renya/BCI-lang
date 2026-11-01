@@ -1,0 +1,33 @@
+\section{기호와 manifest 식별자}
+\label{app:symbols}
+\begin{longtable}{@{}P{.20\linewidth}P{.74\linewidth}@{}}
+\caption{주요 기호의 의미}\\
+\toprule 기호 & 의미 \\\midrule
+\endfirsthead
+\toprule 기호 & 의미 \\\midrule
+\endhead
+\bottomrule\endfoot
+$D$ & 표본의 수치 표현 \\
+$T_{\mathrm{val}}$ & 벡터ㆍepochㆍ행렬ㆍ사건을 포함한 값 형식 \\
+$\mathcal C,\chi_c$ & 순서가 있는 채널 스키마와 채널 기술자 \\
+$\kappa,\mathcal R$ & 시계 영역과 표본 발생 규칙 \\
+$X\in D^{C\times N}$ & 채널 $C$개, 표본 $N$개의 값 블록 \\
+$I_i^{\mathrm{meas}}$ & 대표 측정 시각의 구간 \\
+$a_i$ & 지정한 관측 경계에서의 가용 시각 \\
+$\cut_u(S)$ & 시각 $u$까지 가용한 스트림 부분 \\
+$\rho_i,\rho_v^{\mathrm{fit}}$ & 레코드 계보와 모델 학습 계보 \\
+$e^{\mathrm{schema}},e^{\mathrm{clock}}$ & 스키마와 시계의 세대 식별자 \\
+$H,\theta,\Omega_H$ & 하드웨어 프로필, 선택 구성, 유효 구성 공간 \\
+$C(H,\theta),R_P$ & 구성별 기능 집합과 프로그램의 기능 요구 \\
+$Z_o,\mathcal J_o,\delta_o$ & 연산자 상태 공간, 상태 불변식, 상태 전이 \\
+$\mathcal E_o$ & 처리 모드, 요구 기능 집합, 전방 관측 길이 \\
+$M_v,\vartheta_v$ & 모델 버전과 수치 매개변수 \\
+$\alpha,\beta$ & 누적 유입과 서비스의 경계 함수 \\
+$b,r,R,T$ & burst, 지속 유입률, 서비스율, 서비스 지연 \\
+\end{longtable}
+
+manifest의 모든 식별자는 이름 공간과 버전을 함께 가진다.
+장치ㆍ수신기 식별자, 원천 스트림 식별자, 획득 epoch, 데이터 블록 순번은
+원천 레코드의 범위를 결정한다. 스키마ㆍ시간 뷰ㆍ모델ㆍ계약 식별자는
+변환 관계를 결정한다. 수치 상수와 설정 레코드는 정규화한 표현의 digest를 사용한다.
+기록기는 이 식별자와 전이 사건을 함께 저장하여 동일 원천에서 생성한 여러 분석 결과를 연결한다.

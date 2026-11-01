@@ -1,0 +1,140 @@
+\section{설계 식의 적용 사례}
+\label{sec:cases}
+\subsection{EEG 창 처리와 모델 입력}
+8개 전압 채널을 $250\,\mathrm{Hz}$로 획득하는 프로필을 선택한다.
+Cyton의 기본 무선 경로가 이 채널ㆍ표본률 조합을 제공한다\cite{cyton}.
+분석 그래프는 전압 단위 변환, 길이 63의 대칭 FIR, 길이 250ㆍhop 25의 창,
+정규화 공분산, 접공간 특징, 고정 모델 추정으로 구성한다.
+FIR 계수와 학습된 접공간 기준은 그래프 매개변수 식별자로 고정한다.
+
+창의 갱신 간격과 첫 표본부터 마지막 표본까지의 시간은
+\begin{equation}
+ T_{\mathrm{hop}}=\frac{25}{250}=0.1\,\mathrm{s},\qquad
+ T_{\mathrm{span}}=\frac{249}{250}=0.996\,\mathrm{s}
+\end{equation}
+이다. FIR의 신호 군지연은 $31/250=0.124\,\mathrm{s}$이다.
+초기 유효성 정책은 62개 이전 표본을 채운 후 필터 출력을 유효로 판정한다.
+창의 시작 위상을 $n_0=62$로 선택하면,
+완전히 유효한 첫 창의 끝은 원천 index $62+249=311$에 위치한다.
+첫 원천 표본의 시각을 0으로 두면 해당 끝점은 $1.244\,\mathrm{s}$이다.
+
+이 그래프의 형식 연결은 표~\ref{tab:eegtypes}와 같다.
+\begin{table}[tb]
+\centering\small
+\caption{EEG 사례의 형식과 갱신 규칙}
+\begin{tabularx}{\linewidth}{@{}P{.20\linewidth}YY@{}}
+\toprule 연산 결과 & 값의 형식 & 시간ㆍ상태 계약 \\\midrule
+전압 표본 & $\mathbb R^{8}$, V & $250\,\mathrm{Hz}$, 시계 $\kappa$ \\
+FIR 출력 & $\mathbb R^{8}$, V & 채널별 이전 62표본 상태 \\
+창 & $\mathbb R^{8\times250}$, V & hop 25, 끝점 anchor \\
+공분산 & $\mathrm{SPD}(8)$, $\mathrm V^2$ & 창당 1개, 정규화 식~\eqref{eq:spd} \\
+접공간 특징 & $\mathbb R^{36}$, 무차원 & 기준 $R$과 모델 입력 스키마 \\
+예측 & 선언한 class score 또는 확률 & 활성 모델 버전과 가용 시각 \\
+\bottomrule
+\end{tabularx}
+\label{tab:eegtypes}
+\end{table}
+
+수신 블록의 마지막 표본을 기준으로 입구 지연 4 ms, 큐 대기 2 ms,
+연산 3 ms, 출력 전달 1 ms를 실행 계약으로 선택하면 끝점 이후의 반응시간은
+\begin{equation}
+ D_{\mathrm{end}}=4+2+3+1=10\,\mathrm{ms}
+\end{equation}
+로 계산한다. 계약 레코드는 이 네 매개변수의 적용 환경과 증거 식별자를 가진다.
+창 길이, 신호 군지연과 실행 반응시간은 각자의 필드로 유지한다.
+
+\subsection{시계 보정 주기와 시간 오차}
+시계 보정 직후의 오차 반경을 $\epsilon_0=0.2\,\mathrm{ms}$,
+보정 간격 동안의 상대 속도 오차 상한을 $\rho$로 둔다.
+잔차를 이 오차 반경에 포함하는 분석 모형은
+\begin{equation}
+ \epsilon(t)=\epsilon_0+\rho t
+ \label{eq:drift_example}
+\end{equation}
+이다. $\rho=50\,\mathrm{ppm}$이면 $t=10\,\mathrm{s}$에서 $\epsilon=0.7\,\mathrm{ms}$,
+$\rho=100\,\mathrm{ppm}$이면 같은 시각에서 $\epsilon=1.2\,\mathrm{ms}$를 얻는다.
+양의 속도 오차 상한 $\rho>0$과 허용 반경 $\epsilon_\star$를 선택하면 보정 간격은
+\begin{equation}
+ T_{\mathrm{sync}}\le\frac{\epsilon_\star-\epsilon_0}{\rho},
+ \qquad \epsilon_\star\ge\epsilon_0
+\end{equation}
+를 따른다. 그림~\ref{fig:clock}은 식~\eqref{eq:drift_example}의 계산값을 나타낸다.
+
+\begin{figure}[tb]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=.83\linewidth,height=58mm,
+ xlabel={보정 이후 경과시간 (s)},ylabel={오차 반경 (ms)},
+ xmin=0,xmax=20,ymin=0,ymax=2.4,xtick={0,5,10,15,20},ytick={0,.5,1,1.5,2},
+ axis lines=left,tick align=outside,
+ label style={font=\small},tick label style={font=\small},
+ legend style={font=\small,draw=none,at={(.03,.97)},anchor=north west},
+ legend cell align=left]
+\addplot[black,solid,line width=.65pt,domain=0:20,samples=2]{0.2+0.05*x};
+\addlegendentry{$\rho=50\,\mathrm{ppm}$}
+\addplot[black,dashed,line width=.65pt,domain=0:20,samples=2]{0.2+0.1*x};
+\addlegendentry{$\rho=100\,\mathrm{ppm}$}
+\end{axis}
+\end{tikzpicture}
+\caption{시계 보정 간격과 오차 반경의 해석적 관계. 초기 반경 0.2 ms와 두 속도 오차 상한을 식~\eqref{eq:drift_example}에 대입하였다.}
+\label{fig:clock}
+\end{figure}
+
+\subsection{고밀도 전기생리의 payload와 버퍼}
+Neuropixels 1.0의 AP 스트림은 384채널을 $30\,\mathrm{kHz}$로 제공하고,
+SpikeGLX의 아날로그 저장값은 signed 16-bit word를 사용한다\cite{neuropixels,spikeglx_metadata}.
+이 AP 표본 배열의 payload 유량은
+\begin{equation}
+ r_{16}=384\times30\,000\times2=23.04\,\mathrm{MB/s}
+\end{equation}
+이다. 동일 표본 배열의 \code{f64} 표현은
+\begin{equation}
+ r_{64}=384\times30\,000\times8=92.16\,\mathrm{MB/s}
+\end{equation}
+를 사용한다. 여기서 MB는 $10^6$ byte이다. 각 값은 AP 표본 배열의 명시한 표현을 계량한다.
+LFP, SY, 헤더와 재전송은 해당 경로의 추가 항으로 계량한다.
+
+계산 모형은 기준 시계에서 균일한 $30\,000\,\mathrm{s}^{-1}$의 표본 발생을 사용한다.
+한 블록을 채널당 30표본으로 구성하면 블록률은 $1000\,\mathrm{s}^{-1}$이고,
+16-bit 블록의 크기는 $b=23\,040$ byte이다. 해당 FIFO 경계에
+$R=50\,\mathrm{MB/s}$, $T=2\,\mathrm{ms}$의 서비스 곡선을 부여하면
+\begin{equation}
+ \begin{aligned}
+ B_{\max}&=b+r_{16}T=69\,120\,\mathrm{byte}=67.5\,\mathrm{KiB},\\
+ W_{\max}&=T+\frac bR=2.4608\,\mathrm{ms}.
+ \end{aligned}
+\end{equation}
+블록 첫 표본부터 완성까지의 시간은 $29/30\,000\,\mathrm{s}$이다.
+여기에 FIFO 지연을 합하면 첫 표본에서 선택한 출력 경계까지 $3.42747\,\mathrm{ms}$의
+계산 상한을 얻는다. 서비스 계약은 블록 완성 경계를 기준으로 $R,T$를 지정한다.
+
+연속 유입을 $T_{\mathrm{pause}}$ 동안 보관하는 값 배열의 용량은
+$M=rT_{\mathrm{pause}}$로 계산한다. 그림~\ref{fig:memory}는 두 표현의 관계를 나타낸다.
+\begin{figure}[tb]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=.83\linewidth,height=58mm,
+ xlabel={보관 시간 (ms)},ylabel={표본 배열 용량 (MB)},
+ xmin=0,xmax=200,ymin=0,ymax=20,xtick={0,50,100,150,200},ytick={0,5,10,15,20},
+ axis lines=left,tick align=outside,
+ label style={font=\small},tick label style={font=\small},
+ legend style={font=\small,draw=none,at={(.03,.97)},anchor=north west},
+ legend cell align=left]
+\addplot[black,solid,line width=.65pt,domain=0:200,samples=2]{23.04*x/1000};
+\addlegendentry{16-bit: $23.04\,\mathrm{MB/s}$}
+\addplot[black,dashed,line width=.65pt,domain=0:200,samples=2]{92.16*x/1000};
+\addlegendentry{64-bit: $92.16\,\mathrm{MB/s}$}
+\end{axis}
+\end{tikzpicture}
+\caption{384채널, 30 kHz AP 표본 배열의 보관 용량. 식 $M=rT_{\mathrm{pause}}$에 16-bit와 64-bit 표현의 유량을 대입하였다.}
+\label{fig:memory}
+\end{figure}
+
+\subsection{EEG와 fNIRS의 시간 결합}
+EEG 스트림은 전극 전압 스키마를, fNIRS 스트림은
+$(s,d,\lambda,q,u)$의 광학 스키마를 유지한다. Aurora의 원시 광강도와 혈색소 변화량
+출력은 서로 다른 명목 측정량을 갖는다\cite{nirx_formats}.
+결합 연산자는 공통 시간 창 $[u_k,v_k)$와 각 입력의 시계 변환을 지정한다.
+각 스트림에서 해당 창의 특징을 계산하고, 공통 frontier가 $v_k$에 도달하면
+두 특징을 $(\varphi_{\mathrm{EEG}},\varphi_{\mathrm{fNIRS}})$의 곱 형식으로 출력한다.
+후속 모델은 특징의 시간 지지, 표본 수, 유효성 마스크와 변환 계보를 함께 받는다.

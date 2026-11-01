@@ -1,0 +1,39 @@
+[package]
+name = "bci-cli"
+description = "BCi 명령 인터페이스와 구현체 조립"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[[example]]
+name = "bci-lab"
+path = "lab.rs"
+
+[[bin]]
+name = "bci"
+path = "main.rs"
+
+[dependencies]
+bci-schema.workspace = true
+bci-compiler.workspace = true
+bci-runtime.workspace = true
+bci-artifact.workspace = true
+bci-devices.workspace = true
+bci-operators.workspace = true
+bci-extension.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[[test]]
+name = "pipeline"
+path = "pipeline.rs"

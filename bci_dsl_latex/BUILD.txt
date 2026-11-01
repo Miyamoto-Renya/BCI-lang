@@ -1,0 +1,26 @@
+다중 하드웨어 BCI를 위한 Rust 기반 도메인 특화 언어의 형식 설계
+설계 명세 1.0 / 2026-10-31
+
+조판 환경
+  XeLaTeX와 BibTeX를 포함한 TeX Live 2024 이상을 사용한다.
+  main.tex가 fontspec, amsmath, amssymb, amsthm, mathtools,
+  geometry, booktabs, longtable, tabularx, titlesec, caption,
+  TikZ, PGFPlots, natbib, xurl, hyperref 등의 패키지를 불러온다.
+  한글 글꼴은 assets/NotoSerifCJKkr-Regular.otf에서 읽는다.
+
+압축을 푼 디렉터리에서 다음 명령으로 main.pdf를 생성한다.
+
+  xelatex -interaction=nonstopmode -halt-on-error main.tex
+  bibtex main
+  xelatex -interaction=nonstopmode -halt-on-error main.tex
+  xelatex -interaction=nonstopmode -halt-on-error main.tex
+
+파일 구성
+  main.tex              문서 설정, 초록, 각 절의 연결
+  sections/             본문 11개 절과 부록 2개
+  references.bib        논문과 공식 기술 문서 53개
+  assets/               한글 글꼴, 공식 라이선스와 글꼴 출처
+
+세 그림은 본문의 TikZ/PGFPlots 정의에서 벡터 그래픽으로 생성한다.
+수식, 표, 그림 번호와 문헌 번호는 LaTeX와 BibTeX가 계산한다.
+서체 라이선스와 저작권 표시는 assets/OFL.txt 및 FONT-NOTICE.txt에 담았다.

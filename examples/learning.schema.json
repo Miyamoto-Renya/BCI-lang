@@ -1,0 +1,18 @@
+{
+  "format": "bci-schema/0.1",
+  "name": "MotorFeatures",
+  "channels": [
+    {
+      "id": "mu_difference",
+      "quantity": "feature.log_power",
+      "unit": "1",
+      "reference": "features.motor-v1"
+    },
+    {
+      "id": "beta_difference",
+      "quantity": "feature.log_power",
+      "unit": "1",
+      "reference": "features.motor-v1"
+    }
+  ]
+}

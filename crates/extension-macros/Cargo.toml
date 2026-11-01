@@ -1,0 +1,23 @@
+[package]
+name = "bci-extension-macros"
+description = "BCi Rust 연산자 등록 코드 생성의 패키지 경계"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "lib.rs"
+proc-macro = true
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+toml.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[lints]
+workspace = true

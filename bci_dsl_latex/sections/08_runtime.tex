@@ -1,0 +1,177 @@
+\section{Rust 실행 구조와 유한 자원 계획}
+\label{sec:runtime}
+
+\subsection{형식화된 중간 표현과 소유권}
+
+컴파일러는 구문과 이름 해석으로 연산자 그래프를 만들고,
+형식 판단 $\Gamma\vdash p:\tau\xrightarrow{\mathcal E}\sigma$를 각 연결에 부여한다.
+형식화된 중간 표현은 채널 스키마, 시계 사상, 발생 규칙,
+품질 정책과 데이터 계보를 보유한다. 하드웨어 연결은 유효 설정과 capability 조건을,
+실행 계획은 버퍼ㆍ호출시간ㆍ자원 배분 조건을 갖는다.
+\begin{equation}
+ \begin{aligned}
+ \mathrm{Source}&\longrightarrow\mathrm{AST}
+ \longrightarrow\mathrm{TypedGraph},\\
+ \mathrm{TypedGraph}&\longrightarrow
+        \mathrm{BoundGraph}(H,\theta)
+ \longrightarrow\mathrm{ExecutionPlan}.
+ \end{aligned}
+ \label{eq:compiler-pipeline}
+\end{equation}
+각 산출물은 앞 단계의 노드 식별자와 계약을 유지한다.
+격자ㆍ단위ㆍ시계 변환은 명시적 노드로 존재하며,
+상태 초기화와 모델 활성화 사건은 실행 의존성에 포함된다.
+코드 생성은 이 계획의 actor, 버퍼와 전이 관계를 Rust 구성 요소에 대응시킨다.
+
+장치 actor는 native handle, SDK callback 등록, 설정과 획득 세대를 소유한다.
+공통 수명 상태는 다음 전이로 구성한다.
+\begin{equation}
+ \begin{aligned}
+ \mathsf{Created}&\longrightarrow\mathsf{Prepared}(\theta)
+ \longrightarrow\mathsf{Streaming}(e),\\
+ \mathsf{Streaming}(e)&\longrightarrow\mathsf{Draining}(e)
+ \longrightarrow\mathsf{Closed}.
+ \end{aligned}
+ \label{eq:device-lifecycle}
+\end{equation}
+각 전이는 SDK의 완료 응답과 자원 소유 조건을 사용한다.
+종료 전이는 callback 정리와 진행 중 호출의 완료를 포함한다.
+설정 변경은 새 계약과 세대를 선택하는 제어 사건으로 작동한다.
+fault 사건은 원인과 마지막 확정 상태를 보관하고,
+복구 전이는 선택한 초기화 계약으로 새 세대를 생성한다.
+
+가변 actor 상태는 한 소유자가 갱신하고,
+완성된 데이터 블록은 소유권 이동 또는 읽기 공유로 전달한다.
+\code{Arc<T>}를 사용하는 공유 객체는 $T$의 스레드 전달ㆍ공유 조건을 충족한다
+\citep{rust_arc}. FFI wrapper는 포인터 유효성, 정렬, 길이, 수명과 aliasing 조건을
+검증하여 native 버퍼를 형식화된 블록으로 연결한다\citep{rust_reference}.
+이 경계별 검증 조건은 RustBelt가 제시한 의미론적 라이브러리 확장의
+검증 구조를 따른다\citep{rustbelt}.
+
+\subsection{고정 발생률 부분그래프의 실행 증명서}
+
+한 설정과 스키마 세대에서 생산ㆍ소비 token 수가 일정한 부분그래프를
+동기 데이터흐름 그래프 $G=(V,E)$로 나타낸다\citep{sdf}.
+간선 $e$의 생산 수를 $p_e>0$, 소비 수를 $c_e>0$,
+초기 token 수를 $d_e\ge0$으로 둔다.
+양의 정수 반복벡터 $\boldsymbol\nu$는 균형식을 만족한다.
+\begin{equation}
+ p_e\nu_{\mathrm{src}(e)}
+ =
+ c_e\nu_{\mathrm{dst}(e)},
+ \qquad e\in E.
+ \label{eq:sdf-balance}
+\end{equation}
+순차 발화열 $\omega=(v_1,\ldots,v_M)$에서 $N_v(j)$는
+첫 $j$회 발화 중 actor $v$의 횟수이다.
+한 발화는 입력을 소비하고 상태 전이를 완료한 뒤 출력을 생산한다.
+접두 발화열 이후의 점유량은
+\begin{equation}
+ m_e(j)=d_e+p_eN_{\mathrm{src}(e)}(j)
+                 -c_eN_{\mathrm{dst}(e)}(j)
+ \label{eq:sdf-occupancy}
+\end{equation}
+이다. 실행 증명서는 다음 조건을 모두 포함한다.
+\begin{equation}
+ \begin{aligned}
+ N_v(M)&=\nu_v,\qquad v\in V,\\
+ m_e(j-1)&\ge c_e,
+       \qquad e:\mathrm{dst}(e)=v_j,\\
+ B_e&\ge\max_{0\le j\le M}m_e(j).
+ \end{aligned}
+ \label{eq:sdf-certificate}
+\end{equation}
+입력 token 조건은 각 발화의 실행 가능성을 제공하고,
+균형식은 $m_e(M)=d_e$를 준다.
+각 actor의 전이가 유한 시간에 완료되고 외부 입력이 지정한 가용 조건을 만족하면,
+실행기는 같은 발화열을 반복하며 용량 $B_e$ 안에서 흐름을 유지한다.
+병렬 계획은 발화 시작 시 입력을 차감하고 완료 시 출력을 더하는 사건열을 사용하며,
+허용한 사건열의 접두사마다 같은 token 조건과 용량 조건을 검사한다.
+
+간선별 token 크기 상한이 $s_e$ byte이고 독립 저장 영역을 예약하면,
+전체 메모리 예약량은 다음 식으로 계산한다.
+\begin{equation}
+ M_{\mathrm{reserve}}
+ =
+ \sum_{e\in E}B_es_e+
+ \sum_{v\in V}M_v^{\mathrm{work}}+
+ M^{\mathrm{meta}}.
+ \label{eq:memory-reservation}
+\end{equation}
+$M_v^{\mathrm{work}}$는 actor가 동시에 소유하는 입력ㆍ출력ㆍ작업 영역의 상한이며,
+$M^{\mathrm{meta}}$는 큐 관리와 제어 사건의 저장량이다.
+공유 블록을 사용하는 계획은 공유 풀의 수명과 점유량으로 해당 항을 계산한다.
+이벤트 marker와 설정 제어는 사건 actor로 처리하고,
+고정률 영역의 경계에서 가용 조건과 세대 전이를 연결한다.
+
+\subsection{호출시간과 주기 실행 조건}
+
+순차 계획에 전용 실행 구간을 배정하고 actor $v$의 호출시간 상한을 $C_v$로 둔다.
+발화 $j$의 의존 자료 가용 시각 상한을 $\overline a_j^{\mathrm{dep}}$,
+호출ㆍ스케줄링 부가시간 상한을 $o_j$로 둔다.
+주기 $k$의 시작이 $kP$일 때 완료 시각의 상한을 재귀적으로 계산한다.
+\begin{equation}
+ \begin{aligned}
+ \overline f_{k,0}&=kP,\\
+ \overline f_{k,j}
+ &=\max\{\overline f_{k,j-1},
+                 \overline a_{k,j}^{\mathrm{dep}}\}
+                 +C_{v_j}+o_j.
+ \end{aligned}
+ \label{eq:cyclic-response}
+\end{equation}
+각 발화의 상대 deadline을 $D_j$로 두면,
+\begin{equation}
+ \overline f_{k,j}\le kP+D_j,
+ \qquad
+ \overline f_{k,M}\le(k+1)P
+ \label{eq:cyclic-deadline}
+\end{equation}
+가 해당 순차 계획의 충분조건이다.
+주기 시작 시 모든 외부 의존 자료가 준비되는 경우에는
+$\sum_v\nu_vC_v+\sum_jo_j\le P$로 주기 조건을 계산한다.
+실행 프로필은 $C_v$, $o_j$와 가용 상한의 근거,
+CPU 배분과 OS 조건을 함께 보관한다.
+
+\subsection{도착ㆍ서비스 곡선의 버퍼와 지연 상한}
+
+전송 또는 처리 경계의 누적 유입량을 $A(t)$, 누적 완료량을 $D(t)$로 둔다.
+두 양은 같은 payload 계량과 기준 시계를 사용한다.
+초기 상태가 빈 FIFO에서 도착 곡선 $\alpha$와 서비스 곡선 $\beta$를 다음과 같이 정의한다.
+\begin{equation}
+ \begin{aligned}
+ A(t)-A(s)&\le\alpha(t-s),\qquad 0\le s\le t,\\
+ D(t)&\ge(A\otimes\beta)(t),\\
+ (A\otimes\beta)(t)&=
+       \inf_{0\le s\le t}\{A(s)+\beta(t-s)\}.
+ \end{aligned}
+ \label{eq:network-curves}
+\end{equation}
+burst 상한 $b$, 지속 유입률 상한 $r$,
+해당 흐름에 배정한 유효 서비스율 $R>r$와 지연 $T$를 사용한다.
+\begin{equation}
+ \begin{aligned}
+ \alpha(0)&=0,\qquad \alpha(u)=b+ru\quad(u>0),\\
+ \beta(u)&=R(u-T)^+.
+ \end{aligned}
+ \label{eq:rate-latency}
+\end{equation}
+$r$는 기준 시계에서의 유입 상한이며, $b$는 패킷화와 burst를 포함한다.
+$R,T$는 선택한 완료 경계까지의 자원 배분과 경합을 반영한다.
+완성 블록을 계수하는 경계에서는 $T$에 블록 완성과 packetization의 지연을 포함한다.
+Network calculus의 backlogㆍdelay 정리에 따라\citep{networkcalculus}
+\begin{equation}
+ \begin{aligned}
+ A(t)-D(t)&\le b+rT,\\
+ W(t)&=\inf\{d\ge0:A(t)\le D(t+d)\}
+          \le T+\frac bR
+ \end{aligned}
+ \label{eq:network-bounds}
+\end{equation}
+를 얻는다. 동일한 payload 계량을 보존하는 직렬 경로는
+$\beta_{\mathrm{path}}=\beta_1\otimes\cdots\otimes\beta_m$으로 합성하며,
+rate--latency 모형에서는
+$R_{\mathrm{path}}=\min_jR_j$,
+$T_{\mathrm{path}}=\sum_jT_j$를 사용한다.
+실행 계획은 이 상한을 ingress 이후의 가용 지연과 연결하여
+식~\eqref{eq:window-availability-bound} 및 marker의 반응시간 조건을 계산한다.

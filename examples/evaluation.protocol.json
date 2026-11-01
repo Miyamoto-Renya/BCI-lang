@@ -1,0 +1,19 @@
+{
+  "format": "bci-evaluation-protocol/0.1",
+  "aggregation": [
+    "Trial",
+    "Session",
+    "Subject"
+  ],
+  "weighting": "EqualChildMass",
+  "quality": "RequireAll",
+  "bootstrap": {
+    "unit": "Subject",
+    "iterations": 1000,
+    "confidence": 0.95,
+    "seed": 42,
+    "rng": "SplitMix64/0.1",
+    "interval": "PercentileLinear",
+    "undefined": "Exclude"
+  }
+}

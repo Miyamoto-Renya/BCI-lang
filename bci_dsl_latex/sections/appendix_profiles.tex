@@ -1,0 +1,118 @@
+\section{하드웨어 지원 프로필}\label{app:hardware}
+
+표~\ref{tab:hardware_profiles}는 장치와 획득 경로를 결합한 18개 지원 프로필을 정리한다.
+각 프로필은 모델, 펌웨어, 획득 모드와 소프트웨어 판본을 식별하고,
+채널 구성과 표본 표현을 해당 설정에 연결한다.
+표의 필드는 본 논문의 프로필 스키마를 따르며,
+제조사 규격, 장치 조회 결과와 획득 프로그램의 설정을 값의 출처로 기록한다.
+
+\begingroup
+\small
+\begin{longtable}{@{}P{.16\linewidth}P{.35\linewidth}P{.43\linewidth}@{}}
+\caption{장치 및 획득 경로별 지원 프로필}\label{tab:hardware_profiles}\\
+\toprule
+식별자와 대상 & 획득 경로 및 신호 규격 & 주요 필드와 값의 출처 \\
+\midrule
+\endfirsthead
+\caption[]{장치 및 획득 경로별 지원 프로필 (계속)}\\
+\toprule
+식별자와 대상 & 획득 경로 및 신호 규격 & 주요 필드와 값의 출처 \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{다음 쪽에 계속}\\
+\endfoot
+\bottomrule
+\endlastfoot
+
+A01\newline OpenBCI\newline Cyton
+& 전용 무선 동글과 USB serial로 연결한다. 기본 모드는 8 EEG 채널을 250 SPS로 전송한다. 33바이트 프레임에 채널별 signed 24-bit big-endian 값과 보조 데이터를 배치한다.\citep{cyton}
+& \code{frame}, \code{counter}, \code{aux\_mode}, \code{gain}을 기록한다. 공식 프레임 규격과 보드 설정 응답에서 배열, 계수기 폭, 보조부 종류와 전압 환산 배율을 얻는다. \\
+\addlinespace[5pt]
+
+A02\newline Cyton+Daisy
+& 두 8채널 bank가 무선 경로를 공유한다. ADC는 채널당 250 SPS로 획득하고, 각 bank는 연속 두 표본의 평균을 125 SPS로 교대 전송한다.\citep{cyton}
+& \code{adc\_rate}, \code{output\_rate}, \code{bank\_phase}, \code{aggregation}을 기록한다. 공식 Daisy 전송 규칙으로 평균 구간과 교대 위상을 정하고 첫 패킷 뒤에서 유효 구간을 시작한다. \\
+\addlinespace[5pt]
+
+A03\newline OpenBCI\newline Ganglion
+& BLE로 4 EEG 채널을 200 Hz로 전달한다. 압축 신호 패킷은 20바이트에 두 표본을 담는다. 펌웨어 2 계열은 delta 압축을, 3.0.0부터는 18/19-bit MSB 전송을 사용한다.\citep{ganglion,ganglion_release}
+& \code{firmware}, \code{codec}, \code{packet\_id\_domain}, \code{connection\_epoch}를 기록한다. 공식 펌웨어 tag에서 복원 규칙과 패킷 식별자 범위를 정하고 접속 재설정을 획득 경계에 반영한다. \\
+\addlinespace[5pt]
+
+A04\newline actiCHamp\newline 및 Plus
+& Amplifier SDK로 획득한다. 32 EEG+8 AUX 구성은 최대 100 kHz, 64+8은 50 kHz, 96/128/160+8은 25 kHz를 제공한다. 채널별 ADC는 24-bit로 변환한다.\citep{actichamp,brainproducts_sdk}
+& \code{channel\_modules}, \code{sampling\_mode}, \code{aux\_count}, \code{sdk\_version}을 기록한다. 공식 채널--속도 표가 허용 조합을 정하고 SDK 조회 결과가 활성 구성을 채운다. \\
+\addlinespace[5pt]
+
+A05\newline Brain Products\newline RDA
+& BrainVision Recorder가 설정한 EEG 채널과 사건 정보를 RDA/TCP 경로로 전달한다. 장치 선택, 획득 표본률과 출력 구성은 해당 Recorder 세션을 따른다.\citep{recorder}
+& \code{recorder\_version}, \code{amplifier\_model}, \code{output\_schema}, \code{marker\_layout}을 기록한다. Recorder 작업 설정과 해당 판본의 스트림 기술에서 채널 배열 및 사건 표현을 얻는다. \\
+\addlinespace[5pt]
+
+A06\newline Brain Products\newline LSL
+& 제조사 connector가 actiCHamp, BrainAmp 또는 LiveAmp 획득값을 LSL로 제공한다. 장치와 connector 설정이 채널 구성, 표본률과 기준 전위의 의미를 결정한다.\citep{brainproducts_sdk}
+& \code{connector\_version}, \code{device\_driver}, \code{reference}, \code{timestamp\_boundary}를 기록한다. connector 문서와 LSL 기술자를 연결하여 신호 유도 방식과 시각 관측 위치를 명시한다. \\
+\addlinespace[5pt]
+
+A07\newline Unicorn\newline Hybrid Black
+& Bluetooth 2.1+EDR와 C API를 사용한다. 8 EEG 채널을 250 Hz로 획득하며, API는 활성 채널의 float32 값을 표본 순서로 배열한다. 관성 및 상태 채널도 함께 구성한다.\citep{unicorn_manual,unicorn_api}
+& \code{active\_channels}, \code{scan\_stride}, \code{counter\_channel}, \code{validation\_channel}을 기록한다. API 채널 조회가 신호, 계수기와 유효성 지시자의 배열 위치를 결정한다. \\
+\addlinespace[5pt]
+
+A08\newline g.USBamp\newline RESEARCH
+& USB 2.0과 g.NEEDaccess 경로를 사용한다. 16 monopolar 또는 8 bipolar 채널에서 24-bit 동시 표본화를 제공하며, 채널당 표본률 상한은 38.4 kHz이다.\citep{gusbamp}
+& \code{derivation\_mode}, \code{sampling\_mode}, \code{dsp\_filters}, \code{server\_version}을 기록한다. 제품 규격과 서버 설정 조회에서 유도 방식, 출력률과 적용 필터를 얻는다. \\
+\addlinespace[5pt]
+
+A09\newline ANT eego\newline EE-2XX/4XX
+& eego SDK와 BrainFlow 경로를 연결한다. 제조사 연동 문서는 EE-2XX/EE-4XX와 8채널 EE-411 예제를 다룬다. 선택 모델의 SDK 설정이 채널 수와 획득률을 정한다.\citep{ant_eego}
+& \code{device\_model}, \code{sdk\_package}, \code{channel\_map}, \code{timestamp\_origin}을 기록한다. SDK 조회와 bridge 기술자에서 채널 단위, 배열과 시각의 생성 위치를 얻는다. \\
+\addlinespace[5pt]
+
+A10\newline BioSemi\newline ActiveTwo/2.5
+& USB 수신기의 ringbuffer SDK로 획득한다. 일반 모드 4/5/6/7은 각각 2048/4096/8192/16384 Hz를 사용한다. ADC값은 32-bit word의 상위 24비트에 놓인다.\citep{biosemi_sdk,biosemi_rate}
+& \code{speedmode}, \code{words\_per\_sample}, \code{status\_layout}, \code{integer\_scale}을 기록한다. Mk2의 해당 모드별 프레임은 282/154/90/58 word이며 공식 buffer 표가 상태부와 환산식을 정한다. \\
+\addlinespace[5pt]
+
+A11\newline BioSemi\newline ActiveThree
+& 장치는 설치 채널을 16384 Hz로 전송하고 소프트웨어가 저장 및 분석 표본률을 조정한다. 수신 SDK는 ActiveThree 전용 ringbuffer 배열을 사용한다.\citep{biosemi_rate,biosemi_a3}
+& \code{schema\_id}, \code{wire\_rate}, \code{output\_rate}, \code{decimation}을 기록한다. 해당 SDK 판본에서 프레임 배열을 얻고 획득 설정에서 출력률과 표본 축소 필터를 얻는다. \\
+\addlinespace[5pt]
+
+A12\newline Intan RHD\newline Rhythm USB-7310
+& SPI headstage와 USB 3.0 경로를 사용한다. XEM7310 구성은 최대 16개 RHD chip, 1024채널을 제공하며 채널당 1--30 kS/s 범위의 지원률을 선택한다.\citep{intan_rhd}
+& \code{chip\_map}, \code{sampling\_rate}, \code{fpga\_image}, \code{api\_version}을 기록한다. Rhythm 3.3 API와 FPGA 설정에서 활성 스트림, 표본률 열거값과 프레임 배치를 얻는다. \\
+\addlinespace[5pt]
+
+A13\newline Intan RHS\newline RhythmStim
+& RhythmStim USB-7310은 최대 8개 RHS2116 chip, 128채널을 연결한다. 채널당 20/25/30 kS/s 중 하나를 선택하며 기록 신호와 자극 상태를 전달한다.\citep{intan_rhs}
+& \code{chip\_map}, \code{sampling\_rate}, \code{stim\_state}, \code{trigger\_mode}를 기록한다. RhythmStim 3.3 문서와 장치 설정에서 채널 배치, 자극 상태와 사건 구동 방식을 얻는다. \\
+\addlinespace[5pt]
+
+A14\newline Intan\newline RHX/TCP
+& RHX가 RHD/RHS의 선택 파형을 TCP로 전달하고 명령 인터페이스로 획득을 제어한다. 활성 장치, 채널 선택과 실시간 처리 설정이 출력 신호를 구성한다.\citep{intan_rhx}
+& \code{rhx\_version}, \code{channel\_selection}, \code{filter\_chain}, \code{reference}를 기록한다. RHX 설정과 TCP 인터페이스 문서에 출력 배열, 필터 순서와 기준 전위를 연결한다. \\
+\addlinespace[5pt]
+
+A15\newline Neuropixels 1.0\newline SpikeGLX
+& probe당 AP 384채널을 30 kHz로, LFP 384채널을 2.5 kHz로 획득한다. SpikeGLX가 probe와 보조 신호를 통합하고 원격 접근 경로를 제공한다.\citep{neuropixels,spikeglx}
+& \code{probe\_type}, \code{electrode\_map}, \code{band\_rates}, \code{gain}을 기록한다. probe 메타데이터와 획득 설정에서 전극 선택, 대역별 시간 격자와 신호 환산값을 얻는다. \\
+\addlinespace[5pt]
+
+A16\newline Blackrock\newline CereLink
+& CereLink는 장치 UDP, 다른 CereLink의 공유메모리, Central 공유메모리를 연결 모드로 제공한다. 장치 모델과 sample group 설정이 채널 배열 및 출력률을 결정한다.\citep{cerelink}
+& \code{connection\_mode}, \code{hardware\_protocol}, \code{sample\_group}, \code{shmem\_schema}를 기록한다. 프로젝트의 protocol 정의와 장치 응답에서 전송 및 공유메모리 자료형을 얻는다. \\
+\addlinespace[5pt]
+
+A17\newline NIRSport2\newline Aurora/LSL
+& 단일 장치는 광원 8/16개, 검출기 8--16개와 760/850 nm 파장을 사용한다. 단일ㆍ다장비ㆍBorealis 모드의 제품 표는 각각 최대 240 Hz를 제시한다.\citep{nirsport,nirx_formats}
+& \code{channel\_tuple}, \code{actual\_rate}, \code{quantity\_kind}, \code{montage}를 기록한다. Aurora header와 LSL 기술자에서 광원--검출기--파장 조합, 실제 출력률과 광학 측정량을 얻는다. \\
+\addlinespace[5pt]
+
+A18\newline Artinis\newline OxySoft/LSL
+& OxySoft가 선택 장치의 데이터를 획득하고 혈색소 농도 변화와 조직 포화도를 계산하며 LSL 경로를 제공한다. 장치 구성과 내보내기 설정이 채널 및 표본률을 정한다.\citep{oxysoft}
+& \code{device\_model}, \code{oxysoft\_version}, \code{quantity\_kind}, \code{processing\_parameters}를 기록한다. 설정과 스트림 기술자에서 측정량, 단위와 적용 처리값을 얻는다. \\
+
+\end{longtable}
+\endgroup

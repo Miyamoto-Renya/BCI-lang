@@ -1,0 +1,22 @@
+contract_version = "bci-operator/0.1"
+extends = "std.contracts.stateful_f64/0.1"
+
+[signature]
+quantity = "electrical.voltage"
+schema = "preserve"
+unit = "preserve"
+
+[numeric]
+input_domain = "finite_f64"
+reference = "running_mean.reference.json"
+comparison = "exact_bits"
+
+[resources]
+fixed_bytes = 64
+channel_bytes = 16
+scratch_bytes = 0
+checkpoint_bytes = 0
+checkpoint_channel_bytes = 16
+
+[state]
+codec = "lab.running_mean.le/0.1"

@@ -1,0 +1,41 @@
+language "bci/0.1";
+module demo.typed;
+
+use std.schema as schema;
+use std.time as time;
+use std.source as source;
+use std.signal as signal;
+use std.runtime as runtime;
+use std.recording as recording;
+
+schema EEG = schema.load("eeg.schema.json");
+schema Volts = schema.electrical(
+    channels: ["C3", "C4"], unit: "V", reference: "CPz"
+);
+clock Session = time.session_clock();
+const Sampling = time.uniform(rate: 250[Hz], phase: 0[s]);
+const Hop = BaseHop * 5;
+const BaseHop = 5;
+const Filter = signal.coefficients("smooth.coefficients.json");
+resource Budget = runtime.budget(memory: 16[MiB], queue_policy: Queue.Fault);
+
+graph Smooth(
+    x: Stream<Vec<f64, 2>, Volts, Session, Sampling, StandardQuality>
+) -> Stream<Vec<f64, 2>, Volts, Session, Sampling, StandardQuality> ! live {
+    return x |> signal.fir(coeffs: Filter, warmup: Warmup.Full);
+}
+
+run Main {
+    runtime.configure(mode: Mode.Live, resources: Budget);
+    let raw = source.synthetic(schema: EEG, clock: Session, rate: 250[Hz]);
+    let volts = raw |> signal.convert_unit(to: "V");
+    let smooth = Smooth(volts);
+    let epochs = smooth |> signal.window(
+        size: 250, hop: Hop, start: WindowStart.FirstValid,
+        anchor: Anchor.End, quality: Quality.RequireAll
+    );
+    let covariance = epochs
+        |> signal.covariance()
+        |> signal.regularize(shrinkage: 0.1, floor: 1e-12[V^2]);
+    recording.write((raw, covariance), to: "recordings/demo");
+}

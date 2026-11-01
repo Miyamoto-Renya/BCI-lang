@@ -1,0 +1,118 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{NotoSerifCJKkr-Regular.otf}[
+  Path=assets/,
+  BoldFont=NotoSerifCJKkr-Regular.otf,
+  ItalicFont=NotoSerifCJKkr-Regular.otf,
+  BoldItalicFont=NotoSerifCJKkr-Regular.otf]
+\setmonofont{Latin Modern Mono}[Scale=MatchLowercase]
+\XeTeXlinebreaklocale "ko"
+\XeTeXlinebreakskip=0pt plus 0.08em
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry,graphicx,booktabs,array,longtable,tabularx}
+\usepackage{setspace,titlesec,caption,enumitem,placeins,needspace}
+\usepackage{tikz,pgfplots}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\pgfplotsset{compat=1.18}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xurl}
+\usepackage[unicode,hidelinks,pdfencoding=auto]{hyperref}
+\geometry{left=26mm,right=26mm,top=25mm,bottom=25mm,footskip=12mm}
+\setstretch{1.18}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.15em}
+\setlength{\emergencystretch}{1.5em}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.16}
+\setlength{\abovedisplayskip}{9pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{9pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{13pt plus 3pt minus 2pt}
+\setlength{\intextsep}{13pt plus 3pt minus 2pt}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\renewcommand{\topfraction}{0.90}
+\renewcommand{\bottomfraction}{0.80}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.72}
+\titleformat{\section}{\normalfont\large}{\thesection.}{0.55em}{}
+\titleformat{\subsection}{\normalfont\normalsize}{\thesubsection.}{0.55em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize}{\thesubsubsection.}{0.55em}{}
+\titlespacing*{\section}{0pt}{2.0ex plus .7ex}{1.0ex plus .3ex}
+\titlespacing*{\subsection}{0pt}{1.6ex plus .5ex}{0.6ex plus .2ex}
+\captionsetup{font=small,labelfont=normalfont,labelsep=period,skip=6pt}
+\captionsetup[table]{position=top}
+\renewcommand{\abstractname}{초록}
+\renewcommand{\figurename}{그림}
+\renewcommand{\tablename}{표}
+\renewcommand{\refname}{참고문헌}
+\renewcommand{\proofname}{증명}
+\setlist{nosep,leftmargin=1.8em,topsep=3pt}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newtheoremstyle{paper}{6pt}{6pt}{\normalfont}{0pt}{\normalfont}{.}{0.5em}{}
+\theoremstyle{paper}
+\newtheorem{definition}{정의}[section]
+\newtheorem{proposition}{명제}[section]
+\newtheorem{contract}{계약}[section]
+\numberwithin{equation}{section}
+\newcommand{\Stream}{\operatorname{Stream}}
+\newcommand{\Val}{\operatorname{Val}}
+\newcommand{\cut}{\operatorname{cut}}
+\newcommand{\Dep}{\operatorname{Dep}}
+\newcommand{\Anc}{\operatorname{Anc}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\Live}{\mathsf{Live}}
+\newcommand{\Record}{\mathsf{Record}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\den}[1]{\mathopen{[\![}#1\mathclose{]\!]}}
+\hypersetup{pdftitle={다중 하드웨어 BCI를 위한 Rust 기반 도메인 특화 언어의 형식 설계},
+  pdfauthor={},pdfsubject={언어 의미론, 신호 처리, 하드웨어 계약, 시간 동기화, Rust 실행 구조},
+  pdfkeywords={BCI, DSL, Rust, formal semantics, hardware, clock, provenance}}
+\begin{document}
+\begin{center}
+{\fontsize{16}{23}\selectfont 다중 하드웨어 BCI를 위한 Rust 기반\\도메인 특화 언어의 형식 설계\par}
+\vspace{7pt}
+{\small 설계 명세 1.0\qquad 2026년 10월 31일}
+\end{center}
+\begin{abstract}
+본 논문은 전기생리와 광학 뇌신호를 처리하는 Rust 기반 도메인 특화 언어의 수학적 구조를 제시한다.
+언어는 측정량, 단위, 채널 스키마, 시계 영역, 표본 발생 규칙을 스트림 형식에 포함하고,
+측정 시각과 가용 시각을 함께 사용하여 실시간 연산의 인과성을 정의한다.
+상태 전이 연산자의 직렬ㆍ병렬 합성, 초기 지연을 갖는 피드백, 학습ㆍ평가 데이터 계보를
+하나의 형식 판단으로 연결한다. 하드웨어 계층은 장치 모델, 펌웨어, 획득 경로와 실행 환경을
+지원 프로필로 묶고, 구성별 기능 집합과 유효 설정 공간으로 연결 조건을 계산한다.
+다중 장치의 시계 변환에는 유효 구간과 오차 반경을 부여하며, 창 연산은 입력 진행 경계로 완결 시점을 결정한다.
+실행 구조는 소유권이 명시된 장치 actor, 불변 데이터 블록, 모델 활성화 사건과 유한 버퍼 실행 계획으로 구성한다.
+논문은 합성의 형식ㆍ인과성 보존과 지연 피드백의 실행 유일성을 증명하고,
+EEG 및 고밀도 전기생리의 수치 예제, 18개 하드웨어 프로필, 규격 적합성 조건을 제시한다.
+\end{abstract}
+\noindent{\small 주제어: 뇌--컴퓨터 인터페이스, 도메인 특화 언어, 형식 의미론, 시계 동기화, 데이터 계보, Rust}
+\input{sections/01_introduction}
+\input{sections/02_data_model}
+\input{sections/03_semantics}
+\input{sections/04_operators}
+\input{sections/05_hardware}
+\input{sections/06_time}
+\input{sections/07_learning}
+\input{sections/08_runtime}
+\input{sections/09_cases}
+\input{sections/10_conformance}
+\input{sections/11_conclusion}
+\FloatBarrier
+\appendix
+\input{sections/appendix_profiles}
+\clearpage
+\input{sections/appendix_symbols}
+\FloatBarrier
+\begingroup
+\small
+\raggedright
+\interlinepenalty=10000
+\setstretch{1.08}
+\setlength{\bibsep}{4pt}
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\endgroup
+\end{document}

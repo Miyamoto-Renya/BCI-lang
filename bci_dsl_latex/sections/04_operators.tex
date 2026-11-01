@@ -1,0 +1,181 @@
+\section{신호 처리 원시 연산자의 수학적 계약}
+\label{sec:operators}
+원시 연산자는 수치 함수와 함께 입력 스키마, 출력 스키마, 상태 불변식, 시간 지지,
+초기화 규칙과 품질 전파 규칙을 제공한다. 본 절은 전기생리ㆍ광학 신호의 핵심 연산을
+이 계약의 형태로 정의한다.
+
+\subsection{단위 변환과 재기준화}
+단위 변환은 채널별 선형 또는 affine 사상으로 표현한다. 전극 전압의 재기준화는
+가중치 $w\in\mathbb R^C$, $w^\top\mathbf 1=1$을 사용하여 다음과 같이 계산한다.
+\begin{equation}
+ A_w=I-\mathbf 1w^\top,\qquad Y=A_wX.
+ \label{eq:reref}
+\end{equation}
+연산자는 출력 기준을 $w$와 입력 채널 식별자의 조합으로 기록한다.
+$A_w\mathbf 1=0$이므로 공통 성분에 해당하는 영공간을 형성한다.
+후속 공분산 연산은 이 선형 변환과 자신의 정규화 계약을 함께 사용한다.
+채널 선택과 순서 변경은 명시적인 선택 행렬 $P$로 표현하며 $Y=PX$와 출력 스키마 $P\mathcal C$를 생성한다.
+
+\subsection{필터와 표본률 변환}
+길이 $L$인 FIR 필터를 다음 상태 전이로 정의한다.
+\begin{equation}
+ y_c[n]=\sum_{\ell=0}^{L-1}h[\ell]x_c[n-\ell].
+ \label{eq:fir}
+\end{equation}
+상태는 채널별 이전 $L-1$개 표본이다. 초기 상태의 값과 초기 유효성 구간을 계약에 기록한다.
+계수 $h$가 무차원이면 출력은 입력 전압의 단위를 유지한다.
+출력의 대표 시각은 $t_n$으로 정하고, 시간 지지는 $t_{n-L+1}$부터 $t_n$까지의 입력 구간으로 구성한다.
+선형 위상 계수가 $h[\ell]=h[L-1-\ell]$을 만족하면 군지연은 $(L-1)/(2f_s)$이다.
+실행기는 이 신호 지연과 계산 완료 시각을 각각 기록한다.
+
+IIR 필터는 상태공간 표현을 사용한다.
+\begin{equation}
+ z_{n+1}=Az_n+Bx_n,\qquad y_n=Cz_n+Dx_n.
+\end{equation}
+필터 프로필은 계수의 수치 형식, 실현 방식, 초기 상태, 포화 정책과 안정성 조건을 가진다.
+$\rho(A)<1$인 선형 시불변 실현은 유계 입력에 대한 상태의 유계성을 제공한다.
+실행기는 선택한 계수와 부동소수점 실현을 버전으로 고정한다.
+
+유리수 비율 $p/q$의 재표본화는 입력 격자와 출력 격자를 연결한다.
+\begin{equation}
+ f_{\mathrm{out}}=\frac pq f_{\mathrm{in}},\qquad
+ y[m]=\sum_n x[n]h[mq-np],\qquad p,q\in\mathbb N_{>0}.
+ \label{eq:resample}
+\end{equation}
+계약은 재구성 필터 $h$, 위상 원점, 경계 초기값, anti-alias 대역을 지정한다.
+출력 계보는 각 표본에 기여한 입력 구간과 재표본화 설정을 연결한다.
+정렬 연산자는 대상 시계를 선택하고, 재표본화 연산자는 대상 격자를 선택한다.
+
+\subsection{창과 사건 기준 구간}
+끝점 기준 창은 시작 위상 $n_0$, 길이 $N$, hop $H$, $N,H\in\mathbb N_{>0}$를 가진다.
+\begin{equation}
+ X_k=[x[n_0+kH],x[n_0+kH+1],\ldots,x[n_0+kH+N-1]]
+      \in\mathbb R^{C\times N}.
+ \label{eq:window}
+\end{equation}
+출력 값 형식은 $\operatorname{Epoch}[D,C,N]$이며,
+출력 대표 시각은 $t_{n_0+kH+N-1}$이고, 연속 출력의 명목 간격은 $H/f_s$이다.
+표본 첫 시각과 끝 시각의 차이는 $(N-1)/f_s$이다.
+원시 구간의 표본 집합과 품질 마스크가 창의 유효성을 결정한다.
+사건 기준 구간은 사건 $e$의 시각 $t_e$와 상대 구간 $[a,b)$를 사용하여
+$[t_e+a,t_e+b)$의 표본을 선택한다. 입력 진행 경계가 구간의 끝에 도달하면 창을 완결한다.
+중심 창은 대표 시각과 전방 관측 길이를 연산자 효과에 포함한다.
+
+\subsection{전력 스펙트럼과 무차원 특징}
+실수 입력과 길이 $N\ge1$의 창 함수 $w[n]$를 사용한다.
+창 함수는 $\sum_{n=0}^{N-1}w[n]^2>0$을 만족한다.
+이산 푸리에 변환을
+\begin{equation}
+ \widehat X_c[k]=\sum_{n=0}^{N-1}w[n]x_c[n]
+                 e^{-2\pi\mathrm{i}kn/N}
+\end{equation}
+로 정의한다. 한쪽 스펙트럼의 정규화는
+\begin{equation}
+ P_c[k]=\frac{\eta_k|\widehat X_c[k]|^2}
+                  {f_s\sum_{n=0}^{N-1}w[n]^2},\qquad
+ f_k=\frac{kf_s}{N}
+ \label{eq:psd}
+\end{equation}
+를 $k=0,\ldots,\lfloor N/2\rfloor$에 사용한다.
+$\eta_k$는 DC와 짝수 $N$의 Nyquist 성분에서 1, 나머지 양의 주파수에서 2이다.
+입력 단위가 $u$이면 $P_c[k]$의 단위는 $u^2/\mathrm{Hz}$이다.
+주파수 대역 $B$의 전력과 로그 특징은
+\begin{equation}
+ E_{c,B}=\sum_{k:f_k\in B}P_c[k]\frac{f_s}{N},\qquad
+ \varphi_{c,B}=\log\frac{E_{c,B}+E_0}{E_{\mathrm{ref}}}
+\end{equation}
+로 정의한다. 양의 상수 $E_0,E_{\mathrm{ref}}$는 $u^2$ 단위를 가지며,
+특징값 $\varphi_{c,B}$는 무차원이다. 언어는 대역 경계, 창 함수, 정규화와 기준 전력을
+특징 스키마에 기록한다.
+
+\subsection{공분산과 공간 특징}
+평균 제거 행렬을 $H_N=I_N-\mathbf 1\mathbf 1^\top/N$으로 두면 표본 공분산은
+\begin{equation}
+ \widehat\Sigma=\frac{1}{N-1}XH_NX^\top,\qquad N\ge2.
+\end{equation}
+공분산 연산은 동일한 물리량과 단위를 갖는 채널 묶음을 입력으로 받는다.
+일반적인 다중 물리량 입력은 선언한 채널별 정규화로 무차원 벡터를 생성한 후 공분산을 계산한다.
+양정치 행렬을 요구하는 후속 연산을 위해 다음 정규화를 정의한다.
+\begin{equation}
+ \begin{aligned}
+ s^2&=\max\left(\frac{\tr\widehat\Sigma}{C},\sigma_0^2\right),
+       &\sigma_0^2&>0,\\
+ \Sigma_\lambda&=(1-\lambda)\widehat\Sigma+\lambda s^2I_C,
+       &0&<\lambda\le1.
+ \end{aligned}
+ \label{eq:spd}
+\end{equation}
+$\sigma_0^2$는 공분산과 같은 단위를 갖는다.
+
+\begin{proposition}[정규화 공분산의 양정치성]
+$\widehat\Sigma\succeq0$, $\sigma_0^2>0$, $0<\lambda\le1$이면
+$\Sigma_\lambda\succ0$이다.
+\end{proposition}
+\begin{proof}
+임의의 $z\ne0$에 대해
+\[
+ z^\top\Sigma_\lambda z
+ =(1-\lambda)z^\top\widehat\Sigma z+\lambda s^2\lVert z\rVert^2
+ \ge\lambda\sigma_0^2\lVert z\rVert^2>0.
+\]
+따라서 양정치 조건이 성립한다.
+\end{proof}
+
+CSP 연산자는 두 클래스의 공분산에서 공간 가중치를 학습한다\cite{csp}.
+본 언어의 CSP 계약은 정규화된 클래스 공분산 $\Sigma_1,\Sigma_2$와 다음 고유문제를 사용한다.
+\begin{equation}
+ \Sigma_1w_j=\lambda_j(\Sigma_1+\Sigma_2)w_j,
+ \qquad w_j^\top(\Sigma_1+\Sigma_2)w_j=1.
+\end{equation}
+선택한 고유벡터, 입력 채널 순서와 기준을 모델 상태에 저장한다.
+선택한 고유벡터의 유한 인덱스 집합을 $J$, $|J|\ge1$로 둔다.
+현재 창의 정규화 공분산으로부터 다음 로그 특징을 계산한다.
+\begin{equation}
+ e_j=w_j^\top\Sigma_\lambda w_j,\qquad
+ \varphi_j=\log\frac{e_j}{\sum_{\ell\in J}e_\ell},\qquad j\in J.
+ \label{eq:csp-feature}
+\end{equation}
+고유벡터의 정규화와 $\Sigma_\lambda\succ0$에서 $e_j>0$을 얻는다.
+분산의 비율은 무차원이며 로그 특징의 정의역을 만족한다.
+
+Riemannian 특징은 양정치 공분산의 기하를 이용한다\cite{riemannian}.
+학습 집합에서 구한 기준 $R\succ0$에 대해
+\begin{equation}
+ Z=\log(R^{-1/2}\Sigma_\lambda R^{-1/2}),\qquad
+ \varphi=\operatorname{svec}(Z)
+ \label{eq:tangent}
+\end{equation}
+를 사용한다. $\operatorname{svec}$는 대각 원소와 $\sqrt2$배의 상삼각 비대각 원소를
+벡터로 구성하여 Frobenius 내적을 보존한다. 식~\eqref{eq:tangent}의 로그 인수는 무차원이다.
+기준 $R$과 채널 스키마는 모델 계보에 속한다.
+
+\subsection{광학 측정 변환}
+광강도 $I_\lambda(t)>0$와 양의 기준 $I_{0,\lambda}$에서 광밀도 변화를
+\begin{equation}
+ \Delta\mathrm{OD}_\lambda(t)
+ =-\log\frac{I_\lambda(t)}{I_{0,\lambda}}
+\end{equation}
+로 정의한다. 광경로와 흡광 계수를 포함한 행렬 $A$를 사용하면
+\begin{equation}
+ \Delta\mathrm{OD}=A\,\Delta c+\xi,
+ \qquad
+ \widehat{\Delta c}=(A^\top WA)^{-1}A^\top W\Delta\mathrm{OD}
+ \label{eq:mbll}
+\end{equation}
+를 얻는다. 이 계약은 $W\succ0$, $\rank(A)$가 추정 농도 성분 수와 같다는 조건을 사용한다.
+광학 연산자는 선택한 파장, source--detector 거리, 차등 광경로 인자,
+흡광 계수의 단위와 로그 밑을 $A$의 메타데이터로 기록한다.
+이 구성은 fNIRS 분석의 광밀도ㆍ농도 변환 관계를 따른다\cite{homer}.
+SNIRF의 채널 대응 정보와 NIRx의 원시ㆍ파생 출력은 동일한 광학 스키마로 연결한다\cite{snirf,nirx_formats}.
+
+\subsection{수치 실행 계약}
+각 연산자는 자료형, 반올림 정책, 유효 입력 영역, 출력 오차 기준을 선언한다.
+참조 연산 $F$와 실행 커널 $\widetilde F$의 비교에는
+\begin{equation}
+ \lVert\widetilde F(x)-F(x)\rVert
+ \le\epsilon_{\mathrm{abs}}+\epsilon_{\mathrm{rel}}\lVert F(x)\rVert
+ \label{eq:numeric}
+\end{equation}
+형태의 조건을 사용한다. 정수 디코더는 패킷 규격에 대응하는 정확한 값 관계를 사용하고,
+부동소수점 커널은 선택한 입력 영역과 자료형에 맞는 수치 조건을 사용한다.
+전이 상태의 유효성 검사와 품질 정책은 각 연산자의 실행 결과에 함께 기록한다.

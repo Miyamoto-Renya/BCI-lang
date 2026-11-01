@@ -1,0 +1,112 @@
+\section{다중 하드웨어 추상화와 구성 계약}
+\label{sec:hardware}
+\subsection{지원 프로필과 접속 계열}
+하드웨어 프로필은 실제 획득 경로의 식별자이다.
+\begin{equation}
+ \begin{aligned}
+ H=(&\mathrm{model},\mathrm{hwrev},\mathrm{firmware},\mathrm{receiver},\\
+    &\mathrm{route},\mathrm{acqVersion},\mathrm{sdkVersion},\mathrm{OS/arch}).
+ \end{aligned}
+ \label{eq:hardwareprofile}
+\end{equation}
+\code{route}는 직접 프로토콜, 직접 SDK, 획득 호스트, 기록ㆍ재생 중 하나를 선택한다.
+직접 프로토콜은 장치 패킷을 해석하고, 직접 SDK는 제조사 버퍼와 제어 인터페이스를 수용한다.
+획득 호스트는 RDA, RHX TCP, SpikeGLX TCP, Open Ephys ZMQ와 같은 프로그램 경계를 사용한다.
+기록 어댑터는 저장 형식의 시간ㆍ표현ㆍ계보를 복원한다\cite{recorder,intan_rhx,spikeglx,open_ephys_zmq}.
+
+Bluetooth Generic Health Sensor Service는 단위, 배율, 오프셋과 표본 배열을 표현한다.
+USB Personal Healthcare Device Class는 해당 클래스의 장치 인터페이스를 정의한다\cite{ghss,usb_classes}.
+프로필은 장치가 채택한 전송 프로토콜과 측정 스키마를 함께 기록한다.
+Cyton의 전용 무선ㆍ시리얼 경로, Ganglion의 BLE 경로, Unicorn의 Bluetooth 2.1+EDR 경로는
+각각의 접속 계약을 가진다\cite{cyton,ganglion,unicorn_manual}.
+
+\subsection{유효 구성과 기능 집합}
+프로필 $H$의 설정 공간을 $\Omega_H$, 선택 설정을 $\theta$로 둔다.
+설정은 채널 집합, 획득률, 출력률, gain, reference, 필터, 입출력 모드를 포함한다.
+설정별 기능 집합은 $C(H,\theta)$로 표현한다.
+\begin{equation}
+ \begin{aligned}
+ \mathcal K=\{&\mathsf{AcquireElectrical},\mathsf{AcquireOptical},
+               \mathsf{AcquireAuxiliary},\\
+             &\mathsf{Configure},\mathsf{MeasureImpedance},
+               \mathsf{ReceiveEvent},\mathsf{EmitEvent},\\
+             &\mathsf{InsertMarker},\mathsf{MapClock},\mathsf{Stimulate}\},
+ \qquad C(H,\theta)\subseteq\mathcal K.
+ \end{aligned}
+\end{equation}
+기능의 동시 사용 관계와 정량 조건은 $K_{H,\theta}$에 기록한다.
+Intan RHD 프로필은 기록ㆍ설정ㆍ보조 입출력을 기술하고, RHS 프로필은 전극 자극과
+기록 상태를 함께 기술한다\cite{intan_rhd,intan_rhs}.
+Neuroelectrics 경로는 EEG, 가속도, 자극 사건과 제어 명령을 기능별 인터페이스에 대응시킨다\cite{neuroelectrics}.
+
+프로그램 $P$의 기능 요구를 $R_P$, 형식ㆍ시간ㆍ자원 요구를 $K_P$, 실행 환경 조건을 $A$로 둔다.
+바인딩 판정은 다음 결합 조건을 평가한다.
+\begin{equation}
+ \begin{aligned}
+ \operatorname{Bind}(P,H,\theta,A)\iff{}&
+ \theta\in\Omega_H\ \land\ R_P\subseteq C(H,\theta)\\
+ &\land\operatorname{SAT}(K_{H,\theta}\land A)\\
+ &\land(K_{H,\theta}\land A\models K_P).
+ \end{aligned}
+ \label{eq:bind}
+\end{equation}
+판정기는 각 절의 결과를 $\mathsf{Pass}$, $\mathsf{Fail}$, $\mathsf{Pending}$으로 기록한다.
+$\mathsf{Pending}$ 항목은 필요한 구성값과 증거 식별자를 수집하고,
+$\mathsf{Fail}$ 항목은 해당 입력ㆍ출력 계약을 진단 정보로 반환한다.
+이 구조는 문서 제약, 런타임 조회와 실행 증거를 하나의 판정식에 연결한다.
+
+\subsection{규격에서 도출한 구성 사례}
+actiCHamp의 채널ㆍ최대 표본률 조합은 표~\ref{tab:actichamp}과 같다\cite{actichamp}.
+프로필은 이 상한과 장치가 제공하는 이산 sampling mode를 함께 저장한다.
+\begin{table}[tb]
+\centering\small
+\caption{actiCHamp의 EEG 채널 구성별 최대 표본률. 각 구성은 AUX 8개를 함께 가진다.}
+\begin{tabular}{@{}lr@{}}
+\toprule EEG 채널 수 & 최대 표본률 \\\midrule
+32 & $100\,\mathrm{kHz}$ \\
+64 & $50\,\mathrm{kHz}$ \\
+96, 128, 160 & $25\,\mathrm{kHz}$ \\
+\bottomrule
+\end{tabular}
+\label{tab:actichamp}
+\end{table}
+
+Cyton+Daisy의 기본 무선 경로는 두 bank를 교대로 전송하며 연속 두 표본을 평균한다\cite{cyton}.
+bank $b$의 출력값과 표본률 관계는 다음과 같이 기록한다.
+\begin{equation}
+ y_b[k]=\frac{x_b[n_b(k)-1]+x_b[n_b(k)]}{2},
+ \quad f_{\mathrm{ADC}}=250\,\mathrm{Hz},
+ \quad f_{\mathrm{out},b}=125\,\mathrm{Hz}.
+\end{equation}
+$n_b(k)$는 bank의 교대 위상을 포함한다. 프로필은 평균 연산과 출력 대표 시각을
+별도 필드로 보관한다.
+
+Ganglion의 firmware 3.0.0은 delta 압축에서 MSB 전송으로 코덱을 변경하였다\cite{ganglion_release}.
+프로필의 스키마 식별자는 모델, firmware tag, codec과 packet layout의 조합으로 구성한다.
+BioSemi ActiveThree는 A3 전용 ring buffer 형식과 $16\,384\,\mathrm{Hz}$의 장치 전송률을
+사용한다\cite{biosemi_a3,biosemi_rate}. 어댑터는 세대별 디코더와 출력 decimation 설정을
+각각 선택하고, 설정 변경 사건에 새 schema epoch를 부여한다.
+
+Intan 파일 형식은 전극 값의 정수 표현을 다음 변환에 연결한다\cite{intan_file}.
+\begin{equation}
+ \begin{aligned}
+ \texttt{.rhd}:\quad &V_{\mu\mathrm V}=0.195(r_{\mathrm{uint16}}-32768),\\
+ \texttt{amplifier.dat}:\quad &V_{\mu\mathrm V}=0.195r_{\mathrm{int16}}.
+ \end{aligned}
+\end{equation}
+디코더는 입력 형식 식별자, 부호 해석과 단위 변환을 함께 선택한다.
+변환 결과와 원래 표현은 같은 계보 노드를 공유한다.
+
+\subsection{프로필 메타데이터와 접근 조건}
+BrainFlow 어댑터는 native core, Rust binding, board ID, preset과 채널 기술자를 기록한다.
+Muse 2 경로는 기본 EEG 4채널과 IMU를 제공하고, 선택한 설정에서 PPG를 활성화한다.
+어댑터는 각 preset의 표본률과 시계 정보를 독립 기술자로 구성한다\cite{brainflow_boards}.
+LSL 어댑터는 source 식별자, outlet 인스턴스, 데이터 형식, 출력 메타데이터와
+clock mapping 버전을 기록한다\cite{brainflow_build,lsl_bindings,lsl_time}.
+CereLink 경로는 standalone, CereLink client, Central client의 연결 모드를 프로필에 둔다\cite{cerelink}.
+
+접근 조건은 소프트웨어 계약과 연결한다. Brain Products SDK 프로필은 사용 조건과
+상업 배포 계약을 식별하고\cite{brainproducts_sdk}, Cortex 프로필은 EEG scope와
+세션 활성화 상태를 기록한다\cite{cortex_subscription}.
+기능 조회와 접근 조건을 함께 평가하면 실행기가 현재 세션에서 사용할 인터페이스를 결정한다.
+부록~\ref{app:hardware}는 18개 대표 모델ㆍ획득 경로를 이 프로필 구조에 대응시킨다.
